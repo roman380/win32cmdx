@@ -183,11 +183,19 @@ void Print_note(FILE* fout, const char* note)
 	fprintf(fout, "%32s * %s\n", "", note);
 }
 
-void Print_section(FILE* fout, const char* section, int n, __int64 offset = -1)
+void Print_section(FILE* fout, const char* section, int n, __int64 offset)
 {
 	fprintf(fout, "[%s #%d]", section, n);
 	if (offset >= 0 && !gQuiet)
 		fprintf(fout, " offset : %I64d(0x%016I64X)", offset, offset);
+	fputc('\n', fout);
+}
+void Print_section(FILE* fout, const char* section, __int64 offset)
+{
+	fprintf(fout, "[%s]", section);
+	if (offset >= 0 && !gQuiet)
+		fprintf(fout, " offset : %I64d(0x%016I64X)", offset, offset);
+
 	fputc('\n', fout);
 }
 
@@ -239,6 +247,53 @@ void Print_date_and_time(FILE* fout, uint16 mod_time, uint16 mod_date)
 	Print_note(fout, buf);
 }
 
+void Print_version(FILE* fout, uint16 ver)
+{
+	char buf[20*2];
+	sprintf_s(buf, sizeof(buf), "ver %u.%u", ver/10, ver%10);
+	Print_note(fout, buf);
+}
+
+void Print_internal_file_attributes(FILE* fout, uint16 attr)
+{
+/*
+      internal file attributes: (2 bytes)
+
+          Bits 1 and 2 are reserved for use by PKWARE.
+
+          The lowest bit of this field indicates, if set, that
+          the file is apparently an ASCII or text file.  If not
+          set, that the file apparently contains binary data.
+          The remaining bits are unused in version 1.0.
+
+          The 0x0002 bit of this field indicates, if set, that a 
+          4 byte variable record length control field precedes each 
+          logical record indicating the length of the record. The 
+          record length control field is stored in little-endian byte
+          order.  This flag is independent of text control characters, 
+          and if used in conjunction with text data, includes any 
+          control characters in the total length of the record. This 
+          value is provided for mainframe data transfer support.
+
+*/
+	if (attr & 1) Print_note(fout, "text file");
+	if (attr & 2) Print_note(fout, "????");
+}
+
+void Print_external_file_attributes(FILE* fout, uint32 attr)
+{
+/*
+      external file attributes: (4 bytes)
+
+          The mapping of the external attributes is
+          host-system dependent (see 'version made by').  For
+          MS-DOS, the low order byte is the MS-DOS directory
+          attribute byte.  If input came from standard input, this
+          field is set to zero.
+*/
+	// Todo: 何か表示すべき??
+}
+
 void Print_general_purpose_bit_flag(FILE* fout, uint16 flags, uint16 method)
 {
 	uint16 w;
@@ -282,6 +337,68 @@ void Print_general_purpose_bit_flag(FILE* fout, uint16 flags, uint16 method)
 	if (flags & 0x8000) Print_note(fout, "Bit 15: Reserved by PKWARE.");
 }
 
+
+void Print_verion_made_by(FILE* fout, uint16 ver)
+{
+/*
+      version made by (2 bytes)
+
+          The upper byte indicates the compatibility of the file
+          attribute information.  If the external file attributes 
+          are compatible with MS-DOS and can be read by PKZIP for 
+          DOS version 2.04g then this value will be zero.  If these 
+          attributes are not compatible, then this value will 
+          identify the host system on which the attributes are 
+          compatible.  Software can use this information to determine
+          the line record format for text files etc.  The current
+          mappings are:
+
+          0 - MS-DOS and OS/2 (FAT / VFAT / FAT32 file systems)
+          1 - Amiga                     2 - OpenVMS
+          3 - UNIX                      4 - VM/CMS
+          5 - Atari ST                  6 - OS/2 H.P.F.S.
+          7 - Macintosh                 8 - Z-System
+          9 - CP/M                     10 - Windows NTFS
+         11 - MVS (OS/390 - Z/OS)      12 - VSE
+         13 - Acorn Risc               14 - VFAT
+         15 - alternate MVS            16 - BeOS
+         17 - Tandem                   18 - OS/400
+         19 - OS/X (Darwin)            20 thru 255 - unused
+
+          The lower byte indicates the ZIP specification version 
+          (the version of this document) supported by the software 
+          used to encode the file.  The value/10 indicates the major 
+          version number, and the value mod 10 is the minor version 
+          number.  
+*/
+	int os_type = (ver >> 8) & 0xff;
+
+	switch (os_type) {
+	case 0:  Print_note(fout, "0 - MS-DOS and OS/2 (FAT / VFAT / FAT32 file systems)"); break;
+	case 1:  Print_note(fout, "1 - Amiga"); break;
+	case 2:  Print_note(fout, "2 - OpenVMS"); break;
+	case 3:  Print_note(fout, "3 - UNIX"); break;
+	case 4:  Print_note(fout, "4 - VM/CMS"); break;
+	case 5:  Print_note(fout, "5 - Atari ST"); break;
+	case 6:  Print_note(fout, "6 - OS/2 H.P.F.S."); break;
+	case 7:  Print_note(fout, "7 - Macintosh"); break;
+	case 8:  Print_note(fout, "8 - Z-System"); break;
+	case 9:  Print_note(fout, "9 - CP/M"); break;
+	case 10: Print_note(fout, "10 - Windows NTFS"); break;
+	case 11: Print_note(fout, "11 - MVS (OS/390 - Z/OS)"); break;
+	case 12: Print_note(fout, "12 - VSE"); break;
+	case 13: Print_note(fout, "13 - Acorn Risc"); break;
+	case 14: Print_note(fout, "14 - VFAT"); break;
+	case 15: Print_note(fout, "15 - alternate MVS"); break;
+	case 16: Print_note(fout, "16 - BeOS"); break;
+	case 17: Print_note(fout, "17 - Tandem"); break;
+	case 18: Print_note(fout, "18 - OS/400"); break;
+	case 19: Print_note(fout, "19 - OS/X (Darwin)"); break;
+	default: Print_note(fout, "20~255 - unused"); break;
+	}//.endswitch
+
+	Print_version(fout, ver & 0xff);
+}
 
 //........................................................................
 void Dump_string(FILE* fin, FILE* fout, size_t length)
@@ -337,14 +454,15 @@ void Dump_Local_file(FILE* fin, FILE* fout, uint32 signature, int n)
         file name (variable size)
         extra field (variable size)
 */
-	uint16 w16, flags, method, mod_time, mod_date, file_name_length, extra_field_length;
-	uint32 w32, compressed_size;
+	uint16 w16, flags=0, method=0, mod_time=0, mod_date=0, file_name_length=0, extra_field_length=0;
+	uint32 w32, compressed_size=0;
 
 	Print_section(fout, "Local file header", n, _ftelli64(fin)-4);
 
 	Print_x(fout, "local file header signature", signature);
 	if (Read16(fin, w16)) {
 		Print_u(fout, "version needed to extract", w16);
+		if (!gQuiet) Print_version(fout, w16);
 	}
 	if (Read16(fin, flags) && Read16(fin, method)) {
 		Print_x(fout, "general purpose bit flag", flags);
@@ -371,12 +489,14 @@ void Dump_Local_file(FILE* fin, FILE* fout, uint32 signature, int n)
 	if (Read16(fin, extra_field_length)) {
 		Print_ux(fout, "extra field length", extra_field_length); // 65,535以上は不可.
 	}
-
-	Print_section(fout, "Local file name", n, _ftelli64(fin));
-	Dump_string(fin, fout, file_name_length);
-
-	Print_section(fout, "Local extra field", n, _ftelli64(fin));
-	Dump_bytes(fin, fout, extra_field_length);
+	if (file_name_length) {
+		Print_section(fout, "Local file name", n, _ftelli64(fin));
+		Dump_string(fin, fout, file_name_length);
+	}
+	if (extra_field_length) {
+		Print_section(fout, "Local extra field", n, _ftelli64(fin));
+		Dump_bytes(fin, fout, extra_field_length);
+	}
 
 /*
   B.  File data
@@ -386,13 +506,18 @@ void Dump_Local_file(FILE* fin, FILE* fout, uint32 signature, int n)
       The series of [local file header][file data][data
       descriptor] repeats for each file in the .ZIP archive. 
 */
-	Print_section(fout, "File data", n, _ftelli64(fin));
-	if (gIsFullDump) {
-		Dump_bytes(fin, fout, compressed_size);
-	}
-	else {
-		_fseeki64(fin, compressed_size, SEEK_CUR);
-		if (!gQuiet) fprintf(fout, "** skip file data(%lu bytes) **; Use -f option to dump the data\n", compressed_size);
+	if (compressed_size == 0xFFFFFFFF)
+		return;	// ZIP64 フォーマットのため、後続データのサイズが不明なので File data と Data descriptor のダンプは止める.
+
+	if (compressed_size) {
+		Print_section(fout, "File data", n, _ftelli64(fin));
+		if (gIsFullDump) {
+			Dump_bytes(fin, fout, compressed_size);
+		}
+		else {
+			_fseeki64(fin, compressed_size, SEEK_CUR);
+			if (!gQuiet) fprintf(fout, "** skip file data(%lu bytes) **; Use -f option to dump the data\n", compressed_size);
+		}
 	}
 
 /*
@@ -418,7 +543,7 @@ void Dump_Local_file(FILE* fin, FILE* fout, uint32 signature, int n)
       the file the compressed and uncompressed sizes will be 8
       byte values.  
 */
-	if (flags & 0x0008) {
+	if (flags & 0x0008) { // Bit 3: on
 		Print_section(fout, "Data descriptor", n, _ftelli64(fin));
 		if (Read32(fin, w32)) {
 			Print_x(fout, "crc-32", w32); // ZIP64では、0xFFFFFFFFに固定する.
@@ -432,15 +557,195 @@ void Dump_Local_file(FILE* fin, FILE* fout, uint32 signature, int n)
 	}
 }
 
+void Dump_Archive_extra_data_record(FILE* fin, FILE* fout, uint32 signature)
+{
+/*
+  E.  Archive extra data record: 
+
+        archive extra data signature    4 bytes  (0x08064b50)
+        extra field length              4 bytes
+        extra field data                (variable size)
+
+      The Archive Extra Data Record is introduced in version 6.2
+      of the ZIP format specification.  This record exists in support
+      of the Central Directory Encryption Feature implemented as part of 
+      the Strong Encryption Specification as described in this document.
+      When present, this record immediately precedes the central 
+      directory data structure.  The size of this data record will be
+      included in the Size of the Central Directory field in the
+      End of Central Directory record.  If the central directory structure
+      is compressed, but not encrypted, the location of the start of
+      this data record is determined using the Start of Central Directory
+      field in the Zip64 End of Central Directory record.  
+*/
+	uint32 extra_field_length;
+
+	Print_section(fout, "Archive extra data record", _ftelli64(fin)-4);
+	Print_x(fout, "archive extra data signature", signature);
+	if (Read32(fin, extra_field_length)) {
+		Print_ux(fout, "extra field length", extra_field_length);
+
+		Print_section(fout, "extra field data", _ftelli64(fin));
+		Dump_bytes(fin, fout, extra_field_length);
+	}
+}
+
+void Dump_Central_directory_file_header(FILE* fin, FILE* fout, uint32 signature, int n)
+{
+/*
+  F.  Central directory structure:
+
+      [file header 1]
+      .
+      .
+      . 
+      [file header n]
+      [digital signature] 
+
+      File header:
+
+        central file header signature   4 bytes  (0x02014b50)
+        version made by                 2 bytes
+        version needed to extract       2 bytes
+        general purpose bit flag        2 bytes
+        compression method              2 bytes
+        last mod file time              2 bytes
+        last mod file date              2 bytes
+        crc-32                          4 bytes
+        compressed size                 4 bytes
+        uncompressed size               4 bytes
+        file name length                2 bytes
+        extra field length              2 bytes
+        file comment length             2 bytes
+        disk number start               2 bytes
+        internal file attributes        2 bytes
+        external file attributes        4 bytes
+        relative offset of local header 4 bytes
+
+        file name (variable size)
+        extra field (variable size)
+        file comment (variable size)
+*/
+	uint16 w16, flags=0, method=0, mod_time=0, mod_date=0, file_name_length=0, extra_field_length=0, file_comment_length=0;
+	uint32 w32, compressed_size=0;
+
+	Print_section(fout, "File header", n, _ftelli64(fin)-4);
+	Print_x(fout, "central file header signature", signature);
+
+	if (Read16(fin, w16)) {
+		Print_x(fout, "version made by", w16);
+		if(!gQuiet) Print_verion_made_by(fout, w16);
+	}
+	if (Read16(fin, w16)) {
+		Print_u(fout, "version needed to extract", w16);
+		if (!gQuiet) Print_version(fout, w16);
+	}
+	if (Read16(fin, flags) && Read16(fin, method)) {
+		Print_x(fout, "general purpose bit flag", flags);
+		if(!gQuiet) Print_general_purpose_bit_flag(fout, flags, method);
+		Print_x(fout, "compression method", method);
+	}
+	if (Read16(fin, mod_time) && Read16(fin, mod_date)) {
+		Print_x(fout, "last mod file time", mod_time);
+		Print_x(fout, "last mod file date", mod_date);
+		if(!gQuiet) Print_date_and_time(fout, mod_time, mod_date);
+	}
+	if (Read32(fin, w32)) {
+		Print_x(fout, "crc-32", w32); // ZIP64では、0xFFFFFFFFに固定する.
+	}
+	if (Read32(fin, compressed_size)) {
+		Print_ux(fout, "compressed size", compressed_size); // ZIP64では、0xFFFFFFFFに固定する.
+	}
+	if (Read32(fin, w32)) {
+		Print_ux(fout, "uncompressed size", w32); // ZIP64では、0xFFFFFFFFに固定する.
+	}
+	if (Read16(fin, file_name_length)) {
+		Print_ux(fout, "file name length", file_name_length); // 65,535以上は不可.
+	}
+	if (Read16(fin, extra_field_length)) {
+		Print_ux(fout, "extra field length", extra_field_length); // 65,535以上は不可.
+	}
+	if (Read16(fin, file_comment_length)) {
+		Print_ux(fout, "file comment length", file_comment_length); // 65,535以上は不可.
+	}
+	if (Read16(fin, w16)) {
+		Print_u(fout, "disk number start", w16);
+	}
+	if (Read16(fin, w16)) {
+		Print_x(fout, "internal file attributes", w16);
+		if(!gQuiet) Print_internal_file_attributes(fout, w16);
+	}
+	if (Read32(fin, w32)) {
+		Print_x(fout, "external file attributes", w32);
+		if(!gQuiet) Print_external_file_attributes(fout, w32);
+	}
+	if (Read32(fin, w32)) {
+		Print_ux(fout, "relative offset of local header", w32);
+	}
+	if (file_name_length) {
+		Print_section(fout, "file name", n, _ftelli64(fin));
+		Dump_string(fin, fout, file_name_length);
+	}
+	if (extra_field_length) {
+		Print_section(fout, "extra field", n, _ftelli64(fin));
+		Dump_bytes(fin, fout, extra_field_length);
+	}
+	if (file_comment_length) {
+		Print_section(fout, "file comment", n, _ftelli64(fin));
+		Dump_string(fin, fout, file_comment_length);
+	}
+}
+
+void Dump_Central_directory_digital_signature(FILE* fin, FILE* fout, uint32 signature)
+{
+/*
+      Digital signature:
+
+        header signature                4 bytes  (0x05054b50)
+        size of data                    2 bytes
+        signature data (variable size)
+
+      With the introduction of the Central Directory Encryption 
+      feature in version 6.2 of this specification, the Central 
+      Directory Structure may be stored both compressed and encrypted. 
+      Although not required, it is assumed when encrypting the
+      Central Directory Structure, that it will be compressed
+      for greater storage efficiency.  Information on the
+      Central Directory Encryption feature can be found in the section
+      describing the Strong Encryption Specification. The Digital 
+      Signature record will be neither compressed nor encrypted.
+*/
+	uint16 size;
+
+	Print_section(fout, "Digital signature", _ftelli64(fin)-4);
+	Print_x(fout, "header signature", signature);
+	if (Read16(fin, size)) {
+		Print_ux(fout, "size of data", size);
+
+		Print_section(fout, "signature data", _ftelli64(fin));
+		Dump_bytes(fin, fout, size);
+	}
+}
+
 /** finからのPKZIPファイル入力に対して、foutにダンプ出力する. */
 void ZipDumpFile(const char* fname, FILE* fin, FILE* fout)
 {
 	uint32 signature = 0;
 	int file_count = 0;
+	int dir_count = 0;
 	while (Read32(fin, signature)) {
 		switch (signature) {
 		case 0x04034b50:
 			Dump_Local_file(fin, fout, signature, ++file_count);
+			break;
+		case 0x08064b50:
+			Dump_Archive_extra_data_record(fin, fout, signature);
+			break;
+		case 0x02014b50:
+			Dump_Central_directory_file_header(fin, fout, signature, ++dir_count);
+			break;
+		case 0x05054b50:
+			Dump_Central_directory_digital_signature(fin, fout, signature);
 			break;
 		default:
 			fprintf(fout, "unknown signature:%08x\n", signature);
