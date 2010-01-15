@@ -20,7 +20,7 @@
 <h2><a class="anchor" id="func">
 特徴</a></h2>
 <ul>
-<li>PKZIP version 6.3.2(September 28, 2007) のファイルフォーマット仕様に基づき、構造単位でのダンプを行います。</li>
+<li>PKZIP version 6.3.2[September 28, 2007] のファイルフォーマット仕様に基づき、構造単位でのダンプを行います。</li>
 <li>対象ZIPファイル名に ".zipdump.txt" を付加した名前のテキストファイルを生成し、ダンプ結果を出力します。</li>
 </ul>
 <h2><a class="anchor" id="env">
@@ -67,7 +67,7 @@ $‾version-up.pl
 +00000040 : 96 60 F8 CF 28 CF 00 12-03 A9 55 00 12 0A 60 B6 :.`..(.....U...`.
 +00000050 : 08 44 9C 11 22 2E 04 A6-54 20 62 78 EC 04 99 B7 :.D.."...T bx....
 +00000060 : 92 41 08 C5 3C 45 20 1B-00 55 54 0D 00 07 A6 97 :.A..&lt;E ..UT.....
-+00000070 : 50 4B C1 9B 50 4B A6 97-50 4B                   :PK..PK..PK      
++00000070 : 50 4B 17 9D 50 4B A6 97-50 4B                   :PK..PK..PK      
 [File data #1] offset : 167(0x00000000000000A7)
 ** skip file data(417 bytes) **; Use -f option to dump the data
 [Local file header #2] offset : 584(0x0000000000000248)
@@ -93,7 +93,7 @@ version-filt.pl
 +00000040 : 96 60 F8 CF 28 CF 00 12-03 A9 55 00 12 0A 60 B6 :.`..(.....U...`.
 +00000050 : 08 44 9C 11 22 2E 04 A6-54 20 62 78 EC 04 99 B7 :.D.."...T bx....
 +00000060 : 92 41 08 C5 3C 45 20 1B-00 55 54 0D 00 07 64 0A :.A..&lt;E ..UT...d.
-+00000070 : C7 4A E5 9C 50 4B A8 E7-D9 4A                   :.J..PK...J      
++00000070 : C7 4A 9E 9D 50 4B A8 E7-D9 4A                   :.J..PK...J      
 [File data #2] offset : 751(0x00000000000002EF)
 ** skip file data(126 bytes) **; Use -f option to dump the data
 [Local file header #3] offset : 877(0x000000000000036D)
@@ -119,7 +119,7 @@ version-up.pl
 +00000040 : 96 60 F8 CF 28 CF 00 12-03 A9 55 00 12 0A 60 B6 :.`..(.....U...`.
 +00000050 : 08 44 9C 11 22 2E 04 A6-54 20 62 78 EC 04 99 B7 :.D.."...T bx....
 +00000060 : 92 41 08 C5 3C 45 20 1B-00 55 54 0D 00 07 A8 5F :.A..&lt;E ..UT...._
-+00000070 : C7 4A 74 9C 50 4B A8 E7-D9 4A                   :.Jt.PK...J      
++00000070 : C7 4A 17 9D 50 4B A8 E7-D9 4A                   :.J..PK...J      
 [File data #3] offset : 1042(0x0000000000000412)
 ** skip file data(414 bytes) **; Use -f option to dump the data
 unknown signature:02014b50
@@ -135,11 +135,7 @@ skip unknown data 18(0x12) bytes
 </pre></div><h2><a class="anchor" id="pending">
 欠けている機能</a></h2>
 <ul>
-<li>RVAテーブルの比較を行っていません。<ul>
-<li>このテーブルの中身は補助構造へのオフセットとサイズなので、それらの値を比較しても意味がありません。 比較すべきはオフセット先の補助構造ですが、その構造の形式が不明なため実現できていません。</li>
-<li>補助構造は .rdata セクションのRAWDATA中に埋め込まれており、バイト列としての比較は出来ています。</li>
-</ul>
-</li>
+<li>なし。</li>
 </ul>
 <h2><a class="anchor" id="links">
 リンク</a></h2>
@@ -149,14 +145,14 @@ skip unknown data 18(0x12) bytes
 <h2><a class="anchor" id="download">
 ダウンロード</a></h2>
 <ul>
-<li><a href="http://code.google.com/p/win32cmdx/downloads/list">http://code.google.com/p/win32cmdx/downloads/list</a> - 最新版 version 1.0 (r8) [October 3, 2009]</li>
+<li><a href="http://code.google.com/p/win32cmdx/downloads/list">http://code.google.com/p/win32cmdx/downloads/list</a> - 最新版 version 1.0 (r8) [Jan 15, 2010]</li>
 </ul>
 <h2><a class="anchor" id="changelog">
 改訂履歴</a></h2>
 <h3><a class="anchor" id="Rel100">
-version-1.0 [October 3, 2009] 公開初版</a></h3>
+version-1.0 [Jan 15, 2010] 公開初版</a></h3>
 </div>
-<hr size="1"/><address style="text-align: right;"><small>Generated on Sat Jan 16 01:51:37 2010 for win32cmdx by&nbsp;
+<hr size="1"/><address style="text-align: right;"><small>Generated on Sat Jan 16 02:01:22 2010 for win32cmdx by&nbsp;
 <a href="http://www.doxygen.org/index.html">
 doxygen</a> 1.6.1 </small></address>
 </body>
