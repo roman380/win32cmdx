@@ -1,6 +1,5 @@
 /**@file zipdump.cpp --- ZIPファイルの構造ダンプを行う.
  * @author Hiroshi Kuno <http://code.google.com/p/win32cmdx/>
- * @version 1.0
  */
 #include <windows.h>
 #include <stdio.h>
@@ -49,7 +48,7 @@ const char* gUsage  = "usage :zipdump [-h?fqsr] [-d<DIR>] file1.zip file2.zip ..
 
 /** detail help-message for options and version */
 const char* gUsage2 =
-	"  version: 1.0\n"
+	"  version 1.0 (r8)\n"
 	"  -h -?      this help\n"
 	"  -f         full dump\n"
 	"  -q         quiet mode\n"
@@ -581,5 +580,52 @@ next_arg:
 
 	return EXIT_SUCCESS;
 }
+//------------------------------------------------------------------------
+/**@mainpage dump zip file structure
+
+@version 1.0 (r8)
+
+@author Hiroshi Kuno <http://code.google.com/p/win32cmdx/>
+
+@par License:
+	New BSD License
+	Copyright &copy; 2010 by Hiroshi Kuno
+	<br>本ソフトウェアは無保証かつ無償で提供します。利用、再配布、改変は自由です。
+
+<hr>
+@section intro はじめに
+	zipdumpは、ZIPファイルの構造をダンプ出力するコンソールアプリケーションです。
+	壊れたZIPファイルの解析に便利です。
+
+@section func 特徴
+	- PKZIP version 6.3.2[September 28, 2007] のファイルフォーマット仕様に基づき、構造単位でのダンプを行います。
+	- 対象ZIPファイル名に ".zipdump.txt" を付加した名前のテキストファイルを生成し、ダンプ結果を出力します。
+
+@section env 動作環境
+	Windows2000以降。
+	WindowsXP/Vista/Windows7 にて動作確認済み。
+
+@section install インストール方法
+	配布ファイル zipdump.exe を、PATHが通ったフォルダにコピーしてください。
+	アインインストールするには、そのコピーしたファイルを削除してください。
+
+@section usage 使い方
+	@verbinclude usage.tmp
+
+@section example 出力例
+	@verbinclude example.tmp
+
+@section pending 欠けている機能
+	- なし。
+
+@section links リンク
+	- http://code.google.com/p/win32cmdx/ - zipdump開発サイト
+
+@section download ダウンロード
+	- http://code.google.com/p/win32cmdx/downloads/list - 最新版 version 1.0 (r8) [Jan 15, 2010]
+
+@section changelog 改訂履歴
+	@subsection Rel100 version-1.0 [Jan 15, 2010] 公開初版
+*/
 
 // zipdump.cpp - end.
