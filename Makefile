@@ -35,6 +35,7 @@ build: $(TARGET)
 
 zip:
 	svn status
+	del win32cmdx-???.zip
 	zip win32cmdx-src.zip $(SRC) Doxyfile *.pl test/* -x *.aps
 	zip win32dmdx-exe.zip -j Release/*.exe $(MANUAL) html/*.css
 
@@ -69,6 +70,7 @@ usage.tmp: $(TARGET) Makefile
 	-$(TARGET) -h 2>$@
 
 example.tmp: $(TARGET) Makefile
+	del test.zip
 	zip test.zip *.pl
 	-echo zipdump -s test.zip >$@
 	-$(TARGET) -s test.zip >>$@
