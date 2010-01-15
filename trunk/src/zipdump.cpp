@@ -305,13 +305,13 @@ void Dump_bytes(FILE* fin, FILE* fout, size_t length)
 		ascii_dump[i] = ascii(c);
 		if (++i >= 16) {
 			ascii_dump[16] = 0;
-			printf("+%p : %-48s:%-16s\n", offset-i, hex_dump, ascii_dump);
+			fprintf(fout, "+%p : %-48s:%-16s\n", offset-i, hex_dump, ascii_dump);
 			i = 0;
 		}
 	}//.endwhile
 	if (i != 0) {
 		ascii_dump[i] = 0;
-		printf("+%p : %-48s:%-16s\n", offset-i, hex_dump, ascii_dump);
+		fprintf(fout, "+%p : %-48s:%-16s\n", offset-i, hex_dump, ascii_dump);
 	}
 }
 
