@@ -203,21 +203,24 @@ void Print_note(FILE* fout, const char* note)
 	fprintf(fout, "%32s * %s\n", "", note);
 }
 
-void Print_section(FILE* fout, const char* section, int n, __int64 offset)
+void Print_section(FILE* fout, const char* section, __int64 offset, int n = -1)
 {
-	fprintf(fout, "[%s #%d]", section, n);
+	if (n < 0) {
+		fprintf(fout, "[%s]", section);
+	}
+	else {
+		fprintf(fout, "[%s #%d]", section, n);
+	}
 	if (offset >= 0 && !gQuiet) {
 		fprintf(fout, " offset : %I64d(0x%016I64X)", offset, offset);
 	}
 	fputc('\n', fout);
 }
-void Print_section(FILE* fout, const char* section, __int64 offset)
+
+void Print_header(FILE* fout, const char* section, uint32 signature, __int64 offset, int n = -1)
 {
-	fprintf(fout, "[%s]", section);
-	if (offset >= 0 && !gQuiet) {
-		fprintf(fout, " offset : %I64d(0x%016I64X)", offset, offset);
-	}
-	fputc('\n', fout);
+	Print_section(fout, section, offset, n);
+	Print_x(fout, "header signature", signature);
 }
 
 //------------------------------------------------------------------------
@@ -543,7 +546,7 @@ void Dump_bytes(FILE* fin, FILE* fout, size_t length)
 #define DUMP4x(prompt,var,format,detail)	if (Read32(fin, var)) { Print_##format(fout, prompt, var); if (!gQuiet) { detail; } }
 #define DUMP8x(prompt,var,format,detail)	if (Read64(fin, var)) { Print_##format(fout, prompt, var); if (!gQuiet) { detail; } }
 
-void Dump_Local_file(FILE* fin, FILE* fout, uint32 signature, int n)
+void Dump_Local_file(FILE* fin, FILE* fout, int n)
 {
 /*
   A.  Local file header:
@@ -566,10 +569,6 @@ void Dump_Local_file(FILE* fin, FILE* fout, uint32 signature, int n)
 	uint16 w16, flags=0, method=0, mod_time=0, mod_date=0, file_name_length=0, extra_field_length=0;
 	uint32 w32, compressed_size=0;
 
-	Print_section(fout, "Local file header", n, _ftelli64(fin)-4);
-
-	Print_x(fout, "local file header signature", signature);
-
 	DUMP2x("version needed to extract",  w16,                u, Print_version(fout, w16));
 	DUMP2 ("general purpose bit flag",   flags,              x);
 	DUMP2x("compression method",         method,             x, Print_general_purpose_bit_flag(fout, flags, method));
@@ -581,11 +580,11 @@ void Dump_Local_file(FILE* fin, FILE* fout, uint32 signature, int n)
 	DUMP2 ("file name length",           file_name_length,   ux); // 65,535以上は不可.
 	DUMP2 ("extra field length",         extra_field_length, ux); // 65,535以上は不可.
 	if (file_name_length) {
-		Print_section(fout, "Local file name", n, _ftelli64(fin));
+		Print_section(fout, "Local file name", _ftelli64(fin), n);
 		Dump_string(fin, fout, file_name_length);
 	}
 	if (extra_field_length) {
-		Print_section(fout, "Local extra field", n, _ftelli64(fin));
+		Print_section(fout, "Local extra field", _ftelli64(fin), n);
 		Dump_bytes(fin, fout, extra_field_length);
 	}
 
@@ -601,7 +600,7 @@ void Dump_Local_file(FILE* fin, FILE* fout, uint32 signature, int n)
 		return;	// ZIP64 フォーマットのため、後続データのサイズが不明なので File data と Data descriptor のダンプは止める.
 
 	if (compressed_size) {
-		Print_section(fout, "File data", n, _ftelli64(fin));
+		Print_section(fout, "File data", _ftelli64(fin), n);
 		if (gIsFullDump) {
 			Dump_bytes(fin, fout, compressed_size);
 		}
@@ -635,14 +634,14 @@ void Dump_Local_file(FILE* fin, FILE* fout, uint32 signature, int n)
       byte values.  
 */
 	if (flags & 0x0008) { // Bit 3: on
-		Print_section(fout, "Data descriptor", n, _ftelli64(fin));
+		Print_section(fout, "Data descriptor", _ftelli64(fin), n);
 		DUMP4("crc-32",                     w32,                x);  // ZIP64では、0xFFFFFFFFに固定する.
 		DUMP4("compressed size",            compressed_size,    ux); // ZIP64では、0xFFFFFFFFに固定する.
 		DUMP4("uncompressed size",          w32,                ux); // ZIP64では、0xFFFFFFFFに固定する.
 	}
 }
 
-void Dump_Archive_extra_data_record(FILE* fin, FILE* fout, uint32 signature)
+void Dump_Archive_extra_data_record(FILE* fin, FILE* fout)
 {
 /*
   E.  Archive extra data record: 
@@ -665,9 +664,6 @@ void Dump_Archive_extra_data_record(FILE* fin, FILE* fout, uint32 signature)
 */
 	uint32 extra_field_length = 0;
 
-	Print_section(fout, "Archive extra data record", _ftelli64(fin)-4);
-	Print_x(fout, "archive extra data signature", signature);
-
 	DUMP4("extra field length", extra_field_length, ux);
 	if (extra_field_length) {
 		Print_section(fout, "extra field data", _ftelli64(fin));
@@ -675,7 +671,7 @@ void Dump_Archive_extra_data_record(FILE* fin, FILE* fout, uint32 signature)
 	}
 }
 
-void Dump_Central_directory_file_header(FILE* fin, FILE* fout, uint32 signature, int n)
+void Dump_Central_directory_file_header(FILE* fin, FILE* fout, int n)
 {
 /*
   F.  Central directory structure:
@@ -714,9 +710,6 @@ void Dump_Central_directory_file_header(FILE* fin, FILE* fout, uint32 signature,
 	uint16 w16, flags=0, method=0, mod_time=0, mod_date=0, file_name_length=0, extra_field_length=0, file_comment_length=0;
 	uint32 w32, compressed_size=0;
 
-	Print_section(fout, "File header", n, _ftelli64(fin)-4);
-	Print_x(fout, "central file header signature", signature);
-										
 	DUMP2x("version made by",           w16,                 x, Print_verion_made_by(fout, w16));
 	DUMP2x("version needed to extract", w16,                 u, Print_version(fout, w16));
 	DUMP2 ("general purpose bit flag",  flags,               x);
@@ -736,20 +729,20 @@ void Dump_Central_directory_file_header(FILE* fin, FILE* fout, uint32 signature,
 	DUMP4 ("relative offset of local header", w32,           ux);
 
 	if (file_name_length) {
-		Print_section(fout, "file name", n, _ftelli64(fin));
+		Print_section(fout, "file name", _ftelli64(fin), n);
 		Dump_string(fin, fout, file_name_length);
 	}
 	if (extra_field_length) {
-		Print_section(fout, "extra field", n, _ftelli64(fin));
+		Print_section(fout, "extra field", _ftelli64(fin), n);
 		Dump_bytes(fin, fout, extra_field_length);
 	}
 	if (file_comment_length) {
-		Print_section(fout, "file comment", n, _ftelli64(fin));
+		Print_section(fout, "file comment", _ftelli64(fin), n);
 		Dump_string(fin, fout, file_comment_length);
 	}
 }
 
-void Dump_Central_directory_digital_signature(FILE* fin, FILE* fout, uint32 signature)
+void Dump_Central_directory_digital_signature(FILE* fin, FILE* fout)
 {
 /*
       Digital signature:
@@ -770,8 +763,6 @@ void Dump_Central_directory_digital_signature(FILE* fin, FILE* fout, uint32 sign
 */
 	uint16 size = 0;
 
-	Print_section(fout, "Digital signature", _ftelli64(fin)-4);
-	Print_x(fout, "header signature", signature);
 	DUMP2("size of data", size, ux);
 	if (size) {
 		Print_section(fout, "signature data", _ftelli64(fin));
@@ -779,7 +770,7 @@ void Dump_Central_directory_digital_signature(FILE* fin, FILE* fout, uint32 sign
 	}
 }
 
-void Dump_Zip64_end_of_central_directory_record(FILE* fin, FILE* fout, uint32 signature)
+void Dump_Zip64_end_of_central_directory_record(FILE* fin, FILE* fout)
 {
 /*
   G.  Zip64 end of central directory record
@@ -846,9 +837,6 @@ void Dump_Zip64_end_of_central_directory_record(FILE* fin, FILE* fout, uint32 si
 	uint64 w64;
 	uint64 size = 0;
 
-	Print_section(fout, "Zip64 end of central directory record", _ftelli64(fin)-4);
-	Print_x(fout, "signature", signature);
-
 	DUMP8 ("size of zip64 end of central directory record",                 size, ux);
 	DUMP2x("version made by",                                               w16,  x, Print_verion_made_by(fout, w16));
 	DUMP2x("version needed to extract",                                     w16,  u, Print_version(fout, w16));
@@ -860,10 +848,10 @@ void Dump_Zip64_end_of_central_directory_record(FILE* fin, FILE* fout, uint32 si
 	DUMP8 ("offset of start of central directory with respect to the starting disk number", w64, ux);
 
 	Print_section(fout, "zip64 extensible data sector", _ftelli64(fin));
-	Dump_bytes(fin, fout, (size_t)size - 2*2 - 4*2 - 8*4); // sizeフィールド以後の固定長を減ずる.
+	Dump_bytes(fin, fout, (size_t)size - 2*2 - 4*2 - 8*4); // sizeフィールド以後の固定長を減ずる. Todo:size_tのキャストをなんとかすべき.
 }
 
-void Dump_Zip64_end_of_central_directory_locator(FILE* fin, FILE* fout, uint32 signature)
+void Dump_Zip64_end_of_central_directory_locator(FILE* fin, FILE* fout)
 {
 /*
   H.  Zip64 end of central directory locator
@@ -880,14 +868,12 @@ void Dump_Zip64_end_of_central_directory_locator(FILE* fin, FILE* fout, uint32 s
 	uint32 w32, size = 0;
 	uint64 w64;
 
-	Print_section(fout, "Zip64 end of central directory locator", _ftelli64(fin)-4);
-	Print_x(fout, "signature", signature);
 	DUMP4("number of the disk with the start of the zip64 end of central directory", w32, u);
 	DUMP8("relative offset of the zip64 end of central directory record",            w64, ux);
 	DUMP4("total number of disks",                                                   w32, u);
 }
 
-void Dump_End_of_central_directory_record(FILE* fin, FILE* fout, uint32 signature)
+void Dump_End_of_central_directory_record(FILE* fin, FILE* fout)
 {
 /*
   I.  End of central directory record:
@@ -910,8 +896,6 @@ void Dump_End_of_central_directory_record(FILE* fin, FILE* fout, uint32 signatur
 	uint16 w16, zipfile_comment_length = 0;
 	uint32 w32;
 
-	Print_section(fout, "End of central directory record", _ftelli64(fin)-4);
-	Print_x(fout, "signature", signature);
 	DUMP2("number of this disk", w16, u);
 	DUMP2("number of the disk with the start of the central directory",    w16, u);
 	DUMP2("total number of entries in the central directory on this disk", w16, u);
@@ -931,31 +915,39 @@ void ZipDumpFile(const char* fname, FILE* fin, FILE* fout)
 	uint32 signature = 0;
 	int file_count = 0;
 	int dir_count = 0;
-	while (Read32(fin, signature)) {
+	__int64 offset;
+	for (offset = _ftelli64(fin); Read32(fin, signature); offset = _ftelli64(fin)) {
 		switch (signature) {
 		case 0x04034b50:
-			Dump_Local_file(fin, fout, signature, ++file_count);
+			Print_header(fout, "Local file header", signature, offset, ++file_count);
+			Dump_Local_file(fin, fout, file_count);
 			break;
 		case 0x08064b50:
-			Dump_Archive_extra_data_record(fin, fout, signature);
+			Print_header(fout, "Archive extra data record", signature, offset);
+			Dump_Archive_extra_data_record(fin, fout);
 			break;
 		case 0x02014b50:
-			Dump_Central_directory_file_header(fin, fout, signature, ++dir_count);
+			Print_header(fout, "Central file header", signature, offset, ++dir_count);
+			Dump_Central_directory_file_header(fin, fout, dir_count);
 			break;
 		case 0x05054b50:
-			Dump_Central_directory_digital_signature(fin, fout, signature);
+			Print_header(fout, "Digital signature", signature, offset);
+			Dump_Central_directory_digital_signature(fin, fout);
 			break;
 		case 0x06064b50:
-			Dump_Zip64_end_of_central_directory_record(fin, fout, signature);
+			Print_header(fout, "Zip64 end of central directory record", signature, offset);
+			Dump_Zip64_end_of_central_directory_record(fin, fout);
 			break;
 		case 0x07064b50:
-			Dump_Zip64_end_of_central_directory_locator(fin, fout, signature);
+			Print_header(fout, "Zip64 end of central directory locator", signature, offset);
+			Dump_Zip64_end_of_central_directory_locator(fin, fout);
 			break;
 		case 0x06054b50:
-			Dump_End_of_central_directory_record(fin, fout, signature);
+			Print_header(fout, "End of central directory record", signature, offset);
+			Dump_End_of_central_directory_record(fin, fout);
 			break;
 		default:
-			fprintf(fout, "unknown signature:%08x\n", signature);
+			fprintf(fout, "!! Unknown signature : 0x%08X\n", signature);
 			break;
 		}//.endswitch signature
 
