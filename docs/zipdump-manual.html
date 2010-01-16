@@ -68,7 +68,7 @@ version-filt.pl
 +00000040 : 96 60 F8 CF 28 CF 00 12-03 A9 55 00 12 0A 60 B6 :.`..(.....U...`.
 +00000050 : 08 44 9C 11 22 2E 04 A6-54 20 62 78 EC 04 99 B7 :.D.."...T bx....
 +00000060 : 92 41 08 C5 3C 45 20 1B-00 55 54 0D 00 07 64 0A :.A..&lt;E ..UT...d.
-+00000070 : C7 4A 83 CE 50 4B A8 E7-D9 4A                   :.J..PK...J      
++00000070 : C7 4A 8A 6B 51 4B A8 E7-D9 4A                   :.J.kQK...J      
 [File data #1] offset : 167(0x00000000000000A7)
 ** skip file data(126 bytes) **; Use -f option to dump the data
 [Local file header #2] offset : 293(0x0000000000000125)
@@ -95,7 +95,7 @@ version-up.pl
 +00000040 : 96 60 F8 CF 28 CF 00 12-03 A9 55 00 12 0A 60 B6 :.`..(.....U...`.
 +00000050 : 08 44 9C 11 22 2E 04 A6-54 20 62 78 EC 04 99 B7 :.D.."...T bx....
 +00000060 : 92 41 08 C5 3C 45 20 1B-00 55 54 0D 00 07 A8 5F :.A..&lt;E ..UT...._
-+00000070 : C7 4A 80 CE 50 4B A8 E7-D9 4A                   :.J..PK...J      
++00000070 : C7 4A 86 6B 51 4B A8 E7-D9 4A                   :.J.kQK...J      
 [File data #2] offset : 458(0x00000000000001CA)
 ** skip file data(414 bytes) **; Use -f option to dump the data
 [File header #1] offset : 872(0x0000000000000368)
@@ -154,8 +154,15 @@ version-up.pl
 [extra field #2] offset : 1009(0x00000000000003F1)
 +00000000 : 53 44 04 00 BC 00 00 00-55 54 05 00 07 A8 5F C7 :SD......UT...._.
 +00000010 : 4A                                              :J               
-unknown signature:06054b50
-skip unknown data 18(0x12) bytes
+[End of central directory record] offset : 1026(0x0000000000000402)
+                       signature : 0x06054B50
+             number of this disk : 0
+number of the disk with the start of the central directory : 0
+total number of entries in the central directory on this disk : 2
+total number of entries in the central directory : 2
+   size of the central directory : 154(0x0000009A)
+offset of start of central directory with respect to the starting disk number : 872(0x00000368)
+        .ZIP file comment length : 0(0x0000)
 &lt;&lt;&lt; test.zip &gt;&gt;&gt; end.
 
 </pre></div><h2><a class="anchor" id="pending">
@@ -178,7 +185,7 @@ skip unknown data 18(0x12) bytes
 <h3><a class="anchor" id="Rel100">
 version-1.0 [Jan 15, 2010] 公開初版</a></h3>
 </div>
-<hr size="1"/><address style="text-align: right;"><small>Generated on Sat Jan 16 05:46:01 2010 for win32cmdx by&nbsp;
+<hr size="1"/><address style="text-align: right;"><small>Generated on Sat Jan 16 16:38:52 2010 for win32cmdx by&nbsp;
 <a href="http://www.doxygen.org/index.html">
 doxygen</a> 1.6.1 </small></address>
 </body>

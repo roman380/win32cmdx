@@ -136,12 +136,17 @@ FILE* OpenOutput(const char* inputfname, const char* extname)
 
 //........................................................................
 // バイナリ入力処理系.
+inline bool Read16(FILE* fin, uint16& val)
+{
+	return fread(&val, sizeof(val), 1, fin) == 1;
+}
+
 inline bool Read32(FILE* fin, uint32& val)
 {
 	return fread(&val, sizeof(val), 1, fin) == 1;
 }
 
-inline bool Read16(FILE* fin, uint16& val)
+inline bool Read64(FILE* fin, uint64& val)
 {
 	return fread(&val, sizeof(val), 1, fin) == 1;
 }
@@ -158,6 +163,11 @@ void Print_u(FILE* fout, const char* prompt, uint32 a)
 	fprintf(fout, "%32s : %u\n", prompt, a);
 }
 
+void Print_u(FILE* fout, const char* prompt, uint64 a)
+{
+	fprintf(fout, "%32s : %I64u\n", prompt, a);
+}
+
 void Print_x(FILE* fout, const char* prompt, uint16 a)
 {
 	fprintf(fout, "%32s : 0x%04X\n", prompt, a);
@@ -168,6 +178,11 @@ void Print_x(FILE* fout, const char* prompt, uint32 a)
 	fprintf(fout, "%32s : 0x%08X\n", prompt, a);
 }
 
+void Print_x(FILE* fout, const char* prompt, uint64 a)
+{
+	fprintf(fout, "%32s : 0x%016I64X\n", prompt, a);
+}
+
 void Print_ux(FILE* fout, const char* prompt, uint16 a)
 {
 	fprintf(fout, "%32s : %u(0x%04X)\n", prompt, a, a);
@@ -176,6 +191,11 @@ void Print_ux(FILE* fout, const char* prompt, uint16 a)
 void Print_ux(FILE* fout, const char* prompt, uint32 a)
 {
 	fprintf(fout, "%32s : %u(0x%08X)\n", prompt, a, a);
+}
+
+void Print_ux(FILE* fout, const char* prompt, uint64 a)
+{
+	fprintf(fout, "%32s : %u(0x%016I64X)\n", prompt, a, a);
 }
 
 void Print_note(FILE* fout, const char* note)
@@ -200,7 +220,7 @@ void Print_section(FILE* fout, const char* section, __int64 offset)
 }
 
 //------------------------------------------------------------------------
-// 本体関数群
+// ZIP format処理関数群
 //........................................................................
 /** 次のZIP構造ヘッダまで読み飛ばす. */
 void SkipToNextPK(FILE* fin, FILE* fout)
@@ -227,7 +247,7 @@ void SkipToNextPK(FILE* fin, FILE* fout)
 }
 
 //........................................................................
-// ZIPフィールド内容のダンプ.
+// ZIPフィールド内容のダンプ処理.
 void Print_date_and_time(FILE* fout, uint16 mod_time, uint16 mod_date)
 {
 	// use windows API
@@ -277,7 +297,7 @@ void Print_internal_file_attributes(FILE* fout, uint16 attr)
 
 */
 	if (attr & 1) Print_note(fout, "text file");
-	if (attr & 2) Print_note(fout, "????");
+	if (attr & 2) Print_note(fout, "????"); // Todo:説明文が意味不明なので調べること.
 }
 
 void Print_external_file_attributes(FILE* fout, uint32 attr)
@@ -433,7 +453,7 @@ void Dump_bytes(FILE* fin, FILE* fout, size_t length)
 }
 
 //........................................................................
-// ZIPファイルエントリのダンプ.
+// ZIP構造ヘッダのダンプ処理.
 void Dump_Local_file(FILE* fin, FILE* fout, uint32 signature, int n)
 {
 /*
@@ -727,6 +747,189 @@ void Dump_Central_directory_digital_signature(FILE* fin, FILE* fout, uint32 sign
 	}
 }
 
+void Dump_Zip64_end_of_central_directory_record(FILE* fin, FILE* fout, uint32 signature)
+{
+/*
+  G.  Zip64 end of central directory record
+
+        zip64 end of central dir 
+        signature                       4 bytes  (0x06064b50)
+        size of zip64 end of central
+        directory record                8 bytes
+        version made by                 2 bytes
+        version needed to extract       2 bytes
+        number of this disk             4 bytes
+        number of the disk with the 
+        start of the central directory  4 bytes
+        total number of entries in the
+        central directory on this disk  8 bytes
+        total number of entries in the
+        central directory               8 bytes
+        size of the central directory   8 bytes
+        offset of start of central
+        directory with respect to
+        the starting disk number        8 bytes
+        zip64 extensible data sector    (variable size)
+
+        The value stored into the "size of zip64 end of central
+        directory record" should be the size of the remaining
+        record and should not include the leading 12 bytes.
+  
+        Size = SizeOfFixedFields + SizeOfVariableData - 12.
+
+        The above record structure defines Version 1 of the 
+        zip64 end of central directory record. Version 1 was 
+        implemented in versions of this specification preceding 
+        6.2 in support of the ZIP64 large file feature. The 
+        introduction of the Central Directory Encryption feature 
+        implemented in version 6.2 as part of the Strong Encryption 
+        Specification defines Version 2 of this record structure. 
+        Refer to the section describing the Strong Encryption 
+        Specification for details on the version 2 format for 
+        this record.
+
+        Special purpose data may reside in the zip64 extensible data
+        sector field following either a V1 or V2 version of this
+        record.  To ensure identification of this special purpose data
+        it must include an identifying header block consisting of the
+        following:
+
+           Header ID  -  2 bytes
+           Data Size  -  4 bytes
+
+        The Header ID field indicates the type of data that is in the 
+        data block that follows.
+
+        Data Size identifies the number of bytes that follow for this
+        data block type.
+
+        Multiple special purpose data blocks may be present, but each
+        must be preceded by a Header ID and Data Size field.  Current
+        mappings of Header ID values supported in this field are as
+        defined in APPENDIX C.
+
+*/
+	uint16 w16;
+	uint32 w32, size = 0;
+	uint64 w64;
+
+	Print_section(fout, "Zip64 end of central directory record", _ftelli64(fin)-4);
+	Print_x(fout, "signature", signature);
+	if (Read32(fin, size)) {
+		Print_ux(fout, "size of zip64 end of central directory record", size);
+	}
+	if (Read16(fin, w16)) {
+		Print_x(fout, "version made by", w16);
+		if(!gQuiet) Print_verion_made_by(fout, w16);
+	}
+	if (Read16(fin, w16)) {
+		Print_u(fout, "version needed to extract", w16);
+		if (!gQuiet) Print_version(fout, w16);
+	}
+	if (Read32(fin, w32)) {
+		Print_u(fout, "number of this disk", w32);
+	}
+	if (Read32(fin, w32)) {
+		Print_u(fout, "number of the disk with the start of the central directory", w32);
+	}
+	if (Read64(fin, w64)) {
+		Print_u(fout, "total number of entries in the central directory on this disk", w64);
+	}
+	if (Read64(fin, w64)) {
+		Print_u(fout, "total number of entries in the central directory", w64);
+	}
+	if (Read64(fin, w64)) {
+		Print_ux(fout, "size of the central directory", w64);
+	}
+	if (Read64(fin, w64)) {
+		Print_ux(fout, "offset of start of central directory with respect to the starting disk number", w64);
+	}
+	Print_section(fout, "zip64 extensible data sector", _ftelli64(fin));
+	Dump_bytes(fin, fout, size - 2*2 - 4*2 - 8*4); // sizeフィールド以後の固定長を減ずる.
+}
+
+void Dump_Zip64_end_of_central_directory_locator(FILE* fin, FILE* fout, uint32 signature)
+{
+/*
+  H.  Zip64 end of central directory locator
+
+        zip64 end of central dir locator 
+        signature                       4 bytes  (0x07064b50)
+        number of the disk with the
+        start of the zip64 end of 
+        central directory               4 bytes
+        relative offset of the zip64
+        end of central directory record 8 bytes
+        total number of disks           4 bytes
+*/
+	uint32 w32, size = 0;
+	uint64 w64;
+
+	Print_section(fout, "Zip64 end of central directory locator", _ftelli64(fin)-4);
+	Print_x(fout, "signature", signature);
+	if (Read32(fin, w32)) {
+		Print_u(fout, "number of the disk with the start of the zip64 end of central directory", w32);
+	}
+	if (Read64(fin, w64)) {
+		Print_ux(fout, "relative offset of the zip64 end of central directory record", w64);
+	}
+	if (Read32(fin, w32)) {
+		Print_u(fout, "total number of disks", w32);
+	}
+}
+
+void Dump_End_of_central_directory_record(FILE* fin, FILE* fout, uint32 signature)
+{
+/*
+  I.  End of central directory record:
+
+        end of central dir signature    4 bytes  (0x06054b50)
+        number of this disk             2 bytes
+        number of the disk with the
+        start of the central directory  2 bytes
+        total number of entries in the
+        central directory on this disk  2 bytes
+        total number of entries in
+        the central directory           2 bytes
+        size of the central directory   4 bytes
+        offset of start of central
+        directory with respect to
+        the starting disk number        4 bytes
+        .ZIP file comment length        2 bytes
+        .ZIP file comment       (variable size)
+*/
+	uint16 w16, zipfile_comment_length = 0;
+	uint32 w32;
+
+	Print_section(fout, "End of central directory record", _ftelli64(fin)-4);
+	Print_x(fout, "signature", signature);
+	if (Read16(fin, w16)) {
+		Print_u(fout, "number of this disk", w16);
+	}
+	if (Read16(fin, w16)) {
+		Print_u(fout, "number of the disk with the start of the central directory", w16);
+	}
+	if (Read16(fin, w16)) {
+		Print_u(fout, "total number of entries in the central directory on this disk", w16);
+	}
+	if (Read16(fin, w16)) {
+		Print_u(fout, "total number of entries in the central directory", w16);
+	}
+	if (Read32(fin, w32)) {
+		Print_ux(fout, "size of the central directory", w32);
+	}
+	if (Read32(fin, w32)) {
+		Print_ux(fout, "offset of start of central directory with respect to the starting disk number", w32);
+	}
+	if (Read16(fin, zipfile_comment_length)) {
+		Print_ux(fout, ".ZIP file comment length", zipfile_comment_length); // 65,535以上は不可.
+	}
+	if (zipfile_comment_length) {
+		Print_section(fout, ".ZIP file comment", _ftelli64(fin));
+		Dump_string(fin, fout, zipfile_comment_length);
+	}
+}
+
 /** finからのPKZIPファイル入力に対して、foutにダンプ出力する. */
 void ZipDumpFile(const char* fname, FILE* fin, FILE* fout)
 {
@@ -747,6 +950,15 @@ void ZipDumpFile(const char* fname, FILE* fin, FILE* fout)
 		case 0x05054b50:
 			Dump_Central_directory_digital_signature(fin, fout, signature);
 			break;
+		case 0x06064b50:
+			Dump_Zip64_end_of_central_directory_record(fin, fout, signature);
+			break;
+		case 0x07064b50:
+			Dump_Zip64_end_of_central_directory_locator(fin, fout, signature);
+			break;
+		case 0x06054b50:
+			Dump_End_of_central_directory_record(fin, fout, signature);
+			break;
 		default:
 			fprintf(fout, "unknown signature:%08x\n", signature);
 			break;
@@ -759,6 +971,8 @@ void ZipDumpFile(const char* fname, FILE* fin, FILE* fout)
 	}
 }
 
+//........................................................................
+// ZIPファイルダンプのメイン関数.
 /** fnameを読み込み、コメントと余分な空白を除去し、fname+".zipdump.txt"に出力する. */
 void DumpMain(const char* fname)
 {
