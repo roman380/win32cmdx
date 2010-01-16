@@ -44,6 +44,8 @@
 出力例</a></h2>
 <div class="fragment"><pre class="fragment">zipdump -s test.zip 
 &lt;&lt;&lt; test.zip &gt;&gt;&gt; begin.
+*** zipdump of "test.zip" ***
+
 [Local file header #1] offset : 0(0x0000000000000000)
                 header signature : 0x04034B50
        version needed to extract : 20
@@ -58,8 +60,10 @@
                uncompressed size : 139(0x0000008B)
                 file name length : 15(0x000F)
               extra field length : 122(0x007A)
+
 [Local file name #1] offset : 30(0x000000000000001E)
 version-filt.pl
+
 [Local extra field #1] offset : 45(0x000000000000002D)
 +00000000 : 53 44 65 00 BC 00 00 00-00 08 00 FE E7 B7 29 63 :SDe...........)c
 +00000010 : 64 60 69 10 61 60 60 30-60 80 00 1F 20 66 64 05 :d`i.a``0`... fd.
@@ -68,9 +72,11 @@ version-filt.pl
 +00000040 : 96 60 F8 CF 28 CF 00 12-03 A9 55 00 12 0A 60 B6 :.`..(.....U...`.
 +00000050 : 08 44 9C 11 22 2E 04 A6-54 20 62 78 EC 04 99 B7 :.D.."...T bx....
 +00000060 : 92 41 08 C5 3C 45 20 1B-00 55 54 0D 00 07 64 0A :.A..&lt;E ..UT...d.
-+00000070 : C7 4A 8F 9F 51 4B A8 E7-D9 4A                   :.J..QK...J      
++00000070 : C7 4A D1 A7 51 4B A8 E7-D9 4A                   :.J..QK...J      
+
 [File data #1] offset : 167(0x00000000000000A7)
-** skip file data(126 bytes) **; Use -f option to dump the data
+; skip file data(126 bytes), use -f option to dump the data
+
 [Local file header #2] offset : 293(0x0000000000000125)
                 header signature : 0x04034B50
        version needed to extract : 20
@@ -85,8 +91,10 @@ version-filt.pl
                uncompressed size : 802(0x00000322)
                 file name length : 13(0x000D)
               extra field length : 122(0x007A)
+
 [Local file name #2] offset : 323(0x0000000000000143)
 version-up.pl
+
 [Local extra field #2] offset : 336(0x0000000000000150)
 +00000000 : 53 44 65 00 BC 00 00 00-00 08 00 FE E7 B7 29 63 :SDe...........)c
 +00000010 : 64 60 69 10 61 60 60 30-60 80 00 1F 20 66 64 05 :d`i.a``0`... fd.
@@ -95,9 +103,11 @@ version-up.pl
 +00000040 : 96 60 F8 CF 28 CF 00 12-03 A9 55 00 12 0A 60 B6 :.`..(.....U...`.
 +00000050 : 08 44 9C 11 22 2E 04 A6-54 20 62 78 EC 04 99 B7 :.D.."...T bx....
 +00000060 : 92 41 08 C5 3C 45 20 1B-00 55 54 0D 00 07 A8 5F :.A..&lt;E ..UT...._
-+00000070 : C7 4A 8E 9F 51 4B A8 E7-D9 4A                   :.J..QK...J      
++00000070 : C7 4A CF A7 51 4B A8 E7-D9 4A                   :.J..QK...J      
+
 [File data #2] offset : 458(0x00000000000001CA)
-** skip file data(414 bytes) **; Use -f option to dump the data
+; skip file data(414 bytes), use -f option to dump the data
+
 [Central file header #1] offset : 872(0x0000000000000368)
                 header signature : 0x02014B50
                  version made by : 0x0B17
@@ -121,11 +131,14 @@ version-up.pl
                                  * text file
         external file attributes : 0x81B60020
  relative offset of local header : 0(0x00000000)
+
 [file name #1] offset : 918(0x0000000000000396)
 version-filt.pl
+
 [extra field #1] offset : 933(0x00000000000003A5)
 +00000000 : 53 44 04 00 BC 00 00 00-55 54 05 00 07 64 0A C7 :SD......UT...d..
 +00000010 : 4A                                              :J               
+
 [Central file header #2] offset : 950(0x00000000000003B6)
                 header signature : 0x02014B50
                  version made by : 0x0B17
@@ -149,11 +162,14 @@ version-filt.pl
                                  * text file
         external file attributes : 0x81B60020
  relative offset of local header : 293(0x00000125)
+
 [file name #2] offset : 996(0x00000000000003E4)
 version-up.pl
+
 [extra field #2] offset : 1009(0x00000000000003F1)
 +00000000 : 53 44 04 00 BC 00 00 00-55 54 05 00 07 A8 5F C7 :SD......UT...._.
 +00000010 : 4A                                              :J               
+
 [End of central directory record] offset : 1026(0x0000000000000402)
                 header signature : 0x06054B50
              number of this disk : 0
@@ -185,7 +201,7 @@ offset of start of central directory with respect to the starting disk number : 
 <h3><a class="anchor" id="Rel100">
 version-1.0 [Jan 15, 2010] 公開初版</a></h3>
 </div>
-<hr size="1"/><address style="text-align: right;"><small>Generated on Sat Jan 16 20:27:37 2010 for win32cmdx by&nbsp;
+<hr size="1"/><address style="text-align: right;"><small>Generated on Sat Jan 16 20:53:00 2010 for win32cmdx by&nbsp;
 <a href="http://www.doxygen.org/index.html">
 doxygen</a> 1.6.1 </small></address>
 </body>

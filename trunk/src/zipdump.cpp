@@ -206,10 +206,10 @@ void Print_note(FILE* fout, const char* note)
 void Print_section(FILE* fout, const char* section, __int64 offset, int n = -1)
 {
 	if (n < 0) {
-		fprintf(fout, "[%s]", section);
+		fprintf(fout, "\n[%s]", section);
 	}
 	else {
-		fprintf(fout, "[%s #%d]", section, n);
+		fprintf(fout, "\n[%s #%d]", section, n);
 	}
 	if (offset >= 0 && !gQuiet) {
 		fprintf(fout, " offset : %I64d(0x%016I64X)", offset, offset);
@@ -606,7 +606,7 @@ void Dump_Local_file(FILE* fin, FILE* fout, int n)
 		}
 		else {
 			_fseeki64(fin, compressed_size, SEEK_CUR);
-			if (!gQuiet) fprintf(fout, "** skip file data(%lu bytes) **; Use -f option to dump the data\n", compressed_size);
+			if (!gQuiet) fprintf(fout, "; skip file data(%lu bytes), use -f option to dump the data\n", compressed_size);
 		}
 	}
 
@@ -910,12 +910,13 @@ void Dump_End_of_central_directory_record(FILE* fin, FILE* fout)
 }
 
 /** finからのPKZIPファイル入力に対して、foutにダンプ出力する. */
-void ZipDumpFile(const char* fname, FILE* fin, FILE* fout)
+void ZipDumpFile(FILE* fin, FILE* fout)
 {
 	uint32 signature = 0;
 	int file_count = 0;
 	int dir_count = 0;
 	__int64 offset;
+
 	for (offset = _ftelli64(fin); Read32(fin, signature); offset = _ftelli64(fin)) {
 		switch (signature) {
 		case 0x04034b50:
@@ -953,9 +954,6 @@ void ZipDumpFile(const char* fname, FILE* fin, FILE* fout)
 
 		SkipToNextPK(fin, fout);
 	}//.endwhile 
-	if (ferror(fin)) {
-		print_win32error(fname);
-	}
 }
 
 //........................................................................
@@ -972,9 +970,13 @@ void DumpMain(const char* fname)
 	else {
 		fout = OpenOutput(fname, ".zipdump.txt");
 	}
+	fprintf(fout, "*** zipdump of \"%s\" ***\n", fname);
 
-	ZipDumpFile(fname, fin, fout);
+	ZipDumpFile(fin, fout);
 
+	if (ferror(fin)) {
+		print_win32error(fname);
+	}
 	fclose(fin);
 	if (gIsStdout) {
 		printf("<<< %s >>> end.\n\n", fname);
