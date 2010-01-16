@@ -206,16 +206,17 @@ void Print_note(FILE* fout, const char* note)
 void Print_section(FILE* fout, const char* section, int n, __int64 offset)
 {
 	fprintf(fout, "[%s #%d]", section, n);
-	if (offset >= 0 && !gQuiet)
+	if (offset >= 0 && !gQuiet) {
 		fprintf(fout, " offset : %I64d(0x%016I64X)", offset, offset);
+	}
 	fputc('\n', fout);
 }
 void Print_section(FILE* fout, const char* section, __int64 offset)
 {
 	fprintf(fout, "[%s]", section);
-	if (offset >= 0 && !gQuiet)
+	if (offset >= 0 && !gQuiet) {
 		fprintf(fout, " offset : %I64d(0x%016I64X)", offset, offset);
-
+	}
 	fputc('\n', fout);
 }
 
@@ -242,7 +243,7 @@ void SkipToNextPK(FILE* fin, FILE* fout)
 		break;
 	}
 	if (skipsize > 0) {
-		fprintf(fout, "skip unknown data %I64u(0x%I64X) bytes\n", skipsize, skipsize);
+		fprintf(fout, "!! Skip unknown data %I64u(0x%I64X) bytes\n", skipsize, skipsize);
 	}
 }
 
@@ -316,6 +317,86 @@ void Print_external_file_attributes(FILE* fout, uint32 attr)
 
 void Print_general_purpose_bit_flag(FILE* fout, uint16 flags, uint16 method)
 {
+/*
+      general purpose bit flag: (2 bytes)
+
+          Bit 0: If set, indicates that the file is encrypted.
+
+          (For Method 6 - Imploding)
+          Bit 1: If the compression method used was type 6,
+                 Imploding, then this bit, if set, indicates
+                 an 8K sliding dictionary was used.  If clear,
+                 then a 4K sliding dictionary was used.
+          Bit 2: If the compression method used was type 6,
+                 Imploding, then this bit, if set, indicates
+                 3 Shannon-Fano trees were used to encode the
+                 sliding dictionary output.  If clear, then 2
+                 Shannon-Fano trees were used.
+
+          (For Methods 8 and 9 - Deflating)
+          Bit 2  Bit 1
+            0      0    Normal (-en) compression option was used.
+            0      1    Maximum (-exx/-ex) compression option was used.
+            1      0    Fast (-ef) compression option was used.
+            1      1    Super Fast (-es) compression option was used.
+
+          (For Method 14 - LZMA)
+          Bit 1: If the compression method used was type 14,
+                 LZMA, then this bit, if set, indicates
+                 an end-of-stream (EOS) marker is used to
+                 mark the end of the compressed data stream.
+                 If clear, then an EOS marker is not present
+                 and the compressed data size must be known
+                 to extract.
+
+          Note:  Bits 1 and 2 are undefined if the compression
+                 method is any other.
+
+          Bit 3: If this bit is set, the fields crc-32, compressed 
+                 size and uncompressed size are set to zero in the 
+                 local header.  The correct values are put in the 
+                 data descriptor immediately following the compressed
+                 data.  (Note: PKZIP version 2.04g for DOS only 
+                 recognizes this bit for method 8 compression, newer 
+                 versions of PKZIP recognize this bit for any 
+                 compression method.)
+
+          Bit 4: Reserved for use with method 8, for enhanced
+                 deflating. 
+
+          Bit 5: If this bit is set, this indicates that the file is 
+                 compressed patched data.  (Note: Requires PKZIP 
+                 version 2.70 or greater)
+
+          Bit 6: Strong encryption.  If this bit is set, you should
+                 set the version needed to extract value to at least
+                 50 and you must also set bit 0.  If AES encryption
+                 is used, the version needed to extract value must 
+                 be at least 51.
+
+          Bit 7: Currently unused.
+
+          Bit 8: Currently unused.
+
+          Bit 9: Currently unused.
+
+          Bit 10: Currently unused.
+
+          Bit 11: Language encoding flag (EFS).  If this bit is set,
+                  the filename and comment fields for this file
+                  must be encoded using UTF-8. (see APPENDIX D)
+
+          Bit 12: Reserved by PKWARE for enhanced compression.
+
+          Bit 13: Used when encrypting the Central Directory to indicate 
+                  selected data values in the Local Header are masked to
+                  hide their actual values.  See the section describing 
+                  the Strong Encryption Specification for details.
+
+          Bit 14: Reserved by PKWARE.
+
+          Bit 15: Reserved by PKWARE.
+*/
 	uint16 w;
 
 	if (flags & 0x0001) Print_note(fout, "Bit 0: encrypted");
@@ -454,6 +535,14 @@ void Dump_bytes(FILE* fin, FILE* fout, size_t length)
 
 //........................................................................
 // ZIP構造ヘッダのダンプ処理.
+#define DUMP2(prompt,var,format)			if (Read16(fin, var)) { Print_##format(fout, prompt, var); }
+#define DUMP4(prompt,var,format)			if (Read32(fin, var)) { Print_##format(fout, prompt, var); }
+#define DUMP8(prompt,var,format)			if (Read64(fin, var)) { Print_##format(fout, prompt, var); }
+
+#define DUMP2x(prompt,var,format,detail)	if (Read16(fin, var)) { Print_##format(fout, prompt, var); if (!gQuiet) { detail; } }
+#define DUMP4x(prompt,var,format,detail)	if (Read32(fin, var)) { Print_##format(fout, prompt, var); if (!gQuiet) { detail; } }
+#define DUMP8x(prompt,var,format,detail)	if (Read64(fin, var)) { Print_##format(fout, prompt, var); if (!gQuiet) { detail; } }
+
 void Dump_Local_file(FILE* fin, FILE* fout, uint32 signature, int n)
 {
 /*
@@ -480,35 +569,17 @@ void Dump_Local_file(FILE* fin, FILE* fout, uint32 signature, int n)
 	Print_section(fout, "Local file header", n, _ftelli64(fin)-4);
 
 	Print_x(fout, "local file header signature", signature);
-	if (Read16(fin, w16)) {
-		Print_u(fout, "version needed to extract", w16);
-		if (!gQuiet) Print_version(fout, w16);
-	}
-	if (Read16(fin, flags) && Read16(fin, method)) {
-		Print_x(fout, "general purpose bit flag", flags);
-		if(!gQuiet) Print_general_purpose_bit_flag(fout, flags, method);
-		Print_x(fout, "compression method", method);
-	}
-	if (Read16(fin, mod_time) && Read16(fin, mod_date)) {
-		Print_x(fout, "last mod file time", mod_time);
-		Print_x(fout, "last mod file date", mod_date);
-		if(!gQuiet) Print_date_and_time(fout, mod_time, mod_date);
-	}
-	if (Read32(fin, w32)) {
-		Print_x(fout, "crc-32", w32); // ZIP64では、0xFFFFFFFFに固定する.
-	}
-	if (Read32(fin, compressed_size)) {
-		Print_ux(fout, "compressed size", compressed_size); // ZIP64では、0xFFFFFFFFに固定する.
-	}
-	if (Read32(fin, w32)) {
-		Print_ux(fout, "uncompressed size", w32); // ZIP64では、0xFFFFFFFFに固定する.
-	}
-	if (Read16(fin, file_name_length)) {
-		Print_ux(fout, "file name length", file_name_length); // 65,535以上は不可.
-	}
-	if (Read16(fin, extra_field_length)) {
-		Print_ux(fout, "extra field length", extra_field_length); // 65,535以上は不可.
-	}
+
+	DUMP2x("version needed to extract",  w16,                u, Print_version(fout, w16));
+	DUMP2 ("general purpose bit flag",   flags,              x);
+	DUMP2x("compression method",         method,             x, Print_general_purpose_bit_flag(fout, flags, method));
+	DUMP2 ("last mod file time",         mod_time,           x);
+	DUMP2x("last mod file date",         mod_date,           x, Print_date_and_time(fout, mod_time, mod_date));
+	DUMP4 ("crc-32",                     w32,                x);  // ZIP64では、0xFFFFFFFFに固定する.
+	DUMP4 ("compressed size",            compressed_size,    ux); // ZIP64では、0xFFFFFFFFに固定する.
+	DUMP4 ("uncompressed size",          w32,                ux); // ZIP64では、0xFFFFFFFFに固定する.
+	DUMP2 ("file name length",           file_name_length,   ux); // 65,535以上は不可.
+	DUMP2 ("extra field length",         extra_field_length, ux); // 65,535以上は不可.
 	if (file_name_length) {
 		Print_section(fout, "Local file name", n, _ftelli64(fin));
 		Dump_string(fin, fout, file_name_length);
@@ -565,15 +636,9 @@ void Dump_Local_file(FILE* fin, FILE* fout, uint32 signature, int n)
 */
 	if (flags & 0x0008) { // Bit 3: on
 		Print_section(fout, "Data descriptor", n, _ftelli64(fin));
-		if (Read32(fin, w32)) {
-			Print_x(fout, "crc-32", w32); // ZIP64では、0xFFFFFFFFに固定する.
-		}
-		if (Read32(fin, compressed_size)) {
-			Print_ux(fout, "compressed size", compressed_size); // ZIP64では、0xFFFFFFFFに固定する.
-		}
-		if (Read32(fin, w32)) {
-			Print_ux(fout, "uncompressed size", w32); // ZIP64では、0xFFFFFFFFに固定する.
-		}
+		DUMP4("crc-32",                     w32,                x);  // ZIP64では、0xFFFFFFFFに固定する.
+		DUMP4("compressed size",            compressed_size,    ux); // ZIP64では、0xFFFFFFFFに固定する.
+		DUMP4("uncompressed size",          w32,                ux); // ZIP64では、0xFFFFFFFFに固定する.
 	}
 }
 
@@ -598,13 +663,13 @@ void Dump_Archive_extra_data_record(FILE* fin, FILE* fout, uint32 signature)
       this data record is determined using the Start of Central Directory
       field in the Zip64 End of Central Directory record.  
 */
-	uint32 extra_field_length;
+	uint32 extra_field_length = 0;
 
 	Print_section(fout, "Archive extra data record", _ftelli64(fin)-4);
 	Print_x(fout, "archive extra data signature", signature);
-	if (Read32(fin, extra_field_length)) {
-		Print_ux(fout, "extra field length", extra_field_length);
 
+	DUMP4("extra field length", extra_field_length, ux);
+	if (extra_field_length) {
 		Print_section(fout, "extra field data", _ftelli64(fin));
 		Dump_bytes(fin, fout, extra_field_length);
 	}
@@ -651,57 +716,25 @@ void Dump_Central_directory_file_header(FILE* fin, FILE* fout, uint32 signature,
 
 	Print_section(fout, "File header", n, _ftelli64(fin)-4);
 	Print_x(fout, "central file header signature", signature);
+										
+	DUMP2x("version made by",           w16,                 x, Print_verion_made_by(fout, w16));
+	DUMP2x("version needed to extract", w16,                 u, Print_version(fout, w16));
+	DUMP2 ("general purpose bit flag",  flags,               x);
+	DUMP2x("compression method",        method,              x, Print_general_purpose_bit_flag(fout, flags, method));
+	DUMP2 ("last mod file time",        mod_time,            x);
+	DUMP2x("last mod file date",        mod_date,            x, Print_date_and_time(fout, mod_time, mod_date));
+	DUMP4 ("crc-32",                    w32,                 x); // ZIP64では、0xFFFFFFFFに固定する.
+	DUMP4 ("compressed size",           compressed_size,     ux); // ZIP64では、0xFFFFFFFFに固定する.
+	DUMP4 ("uncompressed size",         w32,                 ux); // ZIP64では、0xFFFFFFFFに固定する.
+	DUMP2 ("file name length",          file_name_length,    ux); // 65,535以上は不可.
+	DUMP2 ("extra field length",        extra_field_length,  ux); // 65,535以上は不可.
+	DUMP2 ("file comment length",       file_comment_length, ux); // 65,535以上は不可.
 
-	if (Read16(fin, w16)) {
-		Print_x(fout, "version made by", w16);
-		if(!gQuiet) Print_verion_made_by(fout, w16);
-	}
-	if (Read16(fin, w16)) {
-		Print_u(fout, "version needed to extract", w16);
-		if (!gQuiet) Print_version(fout, w16);
-	}
-	if (Read16(fin, flags) && Read16(fin, method)) {
-		Print_x(fout, "general purpose bit flag", flags);
-		if(!gQuiet) Print_general_purpose_bit_flag(fout, flags, method);
-		Print_x(fout, "compression method", method);
-	}
-	if (Read16(fin, mod_time) && Read16(fin, mod_date)) {
-		Print_x(fout, "last mod file time", mod_time);
-		Print_x(fout, "last mod file date", mod_date);
-		if(!gQuiet) Print_date_and_time(fout, mod_time, mod_date);
-	}
-	if (Read32(fin, w32)) {
-		Print_x(fout, "crc-32", w32); // ZIP64では、0xFFFFFFFFに固定する.
-	}
-	if (Read32(fin, compressed_size)) {
-		Print_ux(fout, "compressed size", compressed_size); // ZIP64では、0xFFFFFFFFに固定する.
-	}
-	if (Read32(fin, w32)) {
-		Print_ux(fout, "uncompressed size", w32); // ZIP64では、0xFFFFFFFFに固定する.
-	}
-	if (Read16(fin, file_name_length)) {
-		Print_ux(fout, "file name length", file_name_length); // 65,535以上は不可.
-	}
-	if (Read16(fin, extra_field_length)) {
-		Print_ux(fout, "extra field length", extra_field_length); // 65,535以上は不可.
-	}
-	if (Read16(fin, file_comment_length)) {
-		Print_ux(fout, "file comment length", file_comment_length); // 65,535以上は不可.
-	}
-	if (Read16(fin, w16)) {
-		Print_u(fout, "disk number start", w16);
-	}
-	if (Read16(fin, w16)) {
-		Print_x(fout, "internal file attributes", w16);
-		if(!gQuiet) Print_internal_file_attributes(fout, w16);
-	}
-	if (Read32(fin, w32)) {
-		Print_x(fout, "external file attributes", w32);
-		if(!gQuiet) Print_external_file_attributes(fout, w32);
-	}
-	if (Read32(fin, w32)) {
-		Print_ux(fout, "relative offset of local header", w32);
-	}
+	DUMP2 ("disk number start",               w16,           u);
+	DUMP2x("internal file attributes",        w16,           x, Print_internal_file_attributes(fout, w16));
+	DUMP4x("external file attributes",        w32,           x, Print_external_file_attributes(fout, w32));
+	DUMP4 ("relative offset of local header", w32,           ux);
+
 	if (file_name_length) {
 		Print_section(fout, "file name", n, _ftelli64(fin));
 		Dump_string(fin, fout, file_name_length);
@@ -735,13 +768,12 @@ void Dump_Central_directory_digital_signature(FILE* fin, FILE* fout, uint32 sign
       describing the Strong Encryption Specification. The Digital 
       Signature record will be neither compressed nor encrypted.
 */
-	uint16 size;
+	uint16 size = 0;
 
 	Print_section(fout, "Digital signature", _ftelli64(fin)-4);
 	Print_x(fout, "header signature", signature);
-	if (Read16(fin, size)) {
-		Print_ux(fout, "size of data", size);
-
+	DUMP2("size of data", size, ux);
+	if (size) {
 		Print_section(fout, "signature data", _ftelli64(fin));
 		Dump_bytes(fin, fout, size);
 	}
@@ -810,42 +842,25 @@ void Dump_Zip64_end_of_central_directory_record(FILE* fin, FILE* fout, uint32 si
 
 */
 	uint16 w16;
-	uint32 w32, size = 0;
+	uint32 w32;
 	uint64 w64;
+	uint64 size = 0;
 
 	Print_section(fout, "Zip64 end of central directory record", _ftelli64(fin)-4);
 	Print_x(fout, "signature", signature);
-	if (Read32(fin, size)) {
-		Print_ux(fout, "size of zip64 end of central directory record", size);
-	}
-	if (Read16(fin, w16)) {
-		Print_x(fout, "version made by", w16);
-		if(!gQuiet) Print_verion_made_by(fout, w16);
-	}
-	if (Read16(fin, w16)) {
-		Print_u(fout, "version needed to extract", w16);
-		if (!gQuiet) Print_version(fout, w16);
-	}
-	if (Read32(fin, w32)) {
-		Print_u(fout, "number of this disk", w32);
-	}
-	if (Read32(fin, w32)) {
-		Print_u(fout, "number of the disk with the start of the central directory", w32);
-	}
-	if (Read64(fin, w64)) {
-		Print_u(fout, "total number of entries in the central directory on this disk", w64);
-	}
-	if (Read64(fin, w64)) {
-		Print_u(fout, "total number of entries in the central directory", w64);
-	}
-	if (Read64(fin, w64)) {
-		Print_ux(fout, "size of the central directory", w64);
-	}
-	if (Read64(fin, w64)) {
-		Print_ux(fout, "offset of start of central directory with respect to the starting disk number", w64);
-	}
+
+	DUMP8 ("size of zip64 end of central directory record",                 size, ux);
+	DUMP2x("version made by",                                               w16,  x, Print_verion_made_by(fout, w16));
+	DUMP2x("version needed to extract",                                     w16,  u, Print_version(fout, w16));
+	DUMP4 ("number of this disk",                                           w32,  u);
+	DUMP4 ("number of the disk with the start of the central directory",    w32,  u);
+	DUMP8 ("total number of entries in the central directory on this disk", w64,  u);
+	DUMP8 ("total number of entries in the central directory",              w64,  u);
+	DUMP8 ("size of the central directory",                                 w64,  ux);
+	DUMP8 ("offset of start of central directory with respect to the starting disk number", w64, ux);
+
 	Print_section(fout, "zip64 extensible data sector", _ftelli64(fin));
-	Dump_bytes(fin, fout, size - 2*2 - 4*2 - 8*4); // sizeフィールド以後の固定長を減ずる.
+	Dump_bytes(fin, fout, (size_t)size - 2*2 - 4*2 - 8*4); // sizeフィールド以後の固定長を減ずる.
 }
 
 void Dump_Zip64_end_of_central_directory_locator(FILE* fin, FILE* fout, uint32 signature)
@@ -867,15 +882,9 @@ void Dump_Zip64_end_of_central_directory_locator(FILE* fin, FILE* fout, uint32 s
 
 	Print_section(fout, "Zip64 end of central directory locator", _ftelli64(fin)-4);
 	Print_x(fout, "signature", signature);
-	if (Read32(fin, w32)) {
-		Print_u(fout, "number of the disk with the start of the zip64 end of central directory", w32);
-	}
-	if (Read64(fin, w64)) {
-		Print_ux(fout, "relative offset of the zip64 end of central directory record", w64);
-	}
-	if (Read32(fin, w32)) {
-		Print_u(fout, "total number of disks", w32);
-	}
+	DUMP4("number of the disk with the start of the zip64 end of central directory", w32, u);
+	DUMP8("relative offset of the zip64 end of central directory record",            w64, ux);
+	DUMP4("total number of disks",                                                   w32, u);
 }
 
 void Dump_End_of_central_directory_record(FILE* fin, FILE* fout, uint32 signature)
@@ -903,27 +912,13 @@ void Dump_End_of_central_directory_record(FILE* fin, FILE* fout, uint32 signatur
 
 	Print_section(fout, "End of central directory record", _ftelli64(fin)-4);
 	Print_x(fout, "signature", signature);
-	if (Read16(fin, w16)) {
-		Print_u(fout, "number of this disk", w16);
-	}
-	if (Read16(fin, w16)) {
-		Print_u(fout, "number of the disk with the start of the central directory", w16);
-	}
-	if (Read16(fin, w16)) {
-		Print_u(fout, "total number of entries in the central directory on this disk", w16);
-	}
-	if (Read16(fin, w16)) {
-		Print_u(fout, "total number of entries in the central directory", w16);
-	}
-	if (Read32(fin, w32)) {
-		Print_ux(fout, "size of the central directory", w32);
-	}
-	if (Read32(fin, w32)) {
-		Print_ux(fout, "offset of start of central directory with respect to the starting disk number", w32);
-	}
-	if (Read16(fin, zipfile_comment_length)) {
-		Print_ux(fout, ".ZIP file comment length", zipfile_comment_length); // 65,535以上は不可.
-	}
+	DUMP2("number of this disk", w16, u);
+	DUMP2("number of the disk with the start of the central directory",    w16, u);
+	DUMP2("total number of entries in the central directory on this disk", w16, u);
+	DUMP2("total number of entries in the central directory", w16, u);
+	DUMP4("size of the central directory", w32, ux);
+	DUMP4("offset of start of central directory with respect to the starting disk number", w32, ux);
+	DUMP2(".ZIP file comment length", zipfile_comment_length, ux); // 65,535以上は不可.
 	if (zipfile_comment_length) {
 		Print_section(fout, ".ZIP file comment", _ftelli64(fin));
 		Dump_string(fin, fout, zipfile_comment_length);
