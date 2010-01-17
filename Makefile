@@ -1,12 +1,13 @@
-# Makefile - for zipdump
+# Makefile - for zipdump, clip
 #
 # Project Home: http://code.google.com/p/win32cmdx/
 # Code license: New BSD License
 #-------------------------------------------------------------------------
 # MACROS
 #
-TARGET=Release\zipdump.exe
-MANUAL=html\zipdump-manual.html
+SOLUTION=zipdump.sln clip.sln
+TARGET=Release\zipdump.exe Release\clip.exe
+MANUAL=html\zipdump-manual.html html\clip-manual.html
 DOXYINDEX=html\index.html
 SRC=Makefile *.sln *.vcproj *.vsprops src/*
 
@@ -15,21 +16,22 @@ SRC=Makefile *.sln *.vcproj *.vsprops src/*
 #
 all:	build
 
-rel:	rebuild $(MANUAL) zip
+rel:	rebuild install zip
 
 #-------------------------------------------------------------------------
 # COMMANDS
 #
 cleanall: clean
 	-del *.zip *.ncb *.user *.dat *.cache *.bak *.tmp $$*
-	-del src\*.aps src\*.bak
+	-del src\*.aps
 	-del /q html\*.* Release\*.* Debug\*.*
 
-clean:
-	vcbuild /clean   zipdump.sln
+clean: $(SOLUTION)
+	!vcbuild /clean /nologo $**
+	del /s *.bak $$*
 
-rebuild:
-	vcbuild /rebuild zipdump.sln
+rebuild: $(SOLUTION)
+	!vcbuild /rebuild /nologo $**
 
 build: $(TARGET)
 
@@ -39,10 +41,14 @@ zip:
 	zip win32cmdx-src.zip $(SRC) Doxyfile *.pl test/* -x *.aps
 	zip win32dmdx-exe.zip -j Release/*.exe $(MANUAL) html/*.css
 
-install: $(TARGET) $(MANUAL)
-	copy $(TARGET) \home\bin
-	copy $(MANUAL)  docs
+install: install.target install.manual
 	copy html\*.css docs
+
+install.target: $(TARGET)
+	!copy $** \home\bin
+
+install.manual: $(MANUAL)
+	!copy $** docs
 
 man: $(MANUAL)
 	start $**
@@ -58,7 +64,7 @@ verup:
 # BUILD
 #
 $(TARGET): $(SRC)
-	vcbuild zipdump.sln
+	vcbuild $(@B).sln
 
 #.........................................................................
 # DOCUMENT
