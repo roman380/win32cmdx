@@ -546,6 +546,32 @@ void Dump_bytes(FILE* fin, FILE* fout, size_t length)
 #define DUMP4x(prompt,var,format,detail)	if (Read32(fin, var)) { Print_##format(fout, prompt, var); if (!gQuiet) { detail; } }
 #define DUMP8x(prompt,var,format,detail)	if (Read64(fin, var)) { Print_##format(fout, prompt, var); if (!gQuiet) { detail; } }
 
+void Dump_extra_field(FILE* fin, FILE* fout, size_t length)
+{
+/*
+          In order to allow different programs and different types
+          of information to be stored in the 'extra' field in .ZIP
+          files, the following structure should be used for all
+          programs storing data in this field:
+
+          header1+data1 + header2+data2 . . .
+
+          Each header should consist of:
+
+            Header ID - 2 bytes
+            Data Size - 2 bytes
+
+          Note: all fields stored in Intel low-byte/high-byte order.
+*/
+	uint16 id, size;
+	size_t offset = 0;
+	while (offset < length && Read16(fin, id) && Read16(fin, size)) {
+		fprintf(fout, "ID : 0x%04X, size : %d(0x%04X)\n", id, size, size);
+		Dump_bytes(fin, fout, size);
+		offset += size + 4;
+	}
+}
+
 void Dump_Local_file(FILE* fin, FILE* fout, int n)
 {
 /*
@@ -585,7 +611,7 @@ void Dump_Local_file(FILE* fin, FILE* fout, int n)
 	}
 	if (extra_field_length) {
 		Print_section(fout, "Local extra field", _ftelli64(fin), n);
-		Dump_bytes(fin, fout, extra_field_length);
+		Dump_extra_field(fin, fout, extra_field_length);
 	}
 
 /*
@@ -667,7 +693,7 @@ void Dump_Archive_extra_data_record(FILE* fin, FILE* fout)
 	DUMP4("extra field length", extra_field_length, ux);
 	if (extra_field_length) {
 		Print_section(fout, "extra field data", _ftelli64(fin));
-		Dump_bytes(fin, fout, extra_field_length);
+		Dump_extra_field(fin, fout, extra_field_length);
 	}
 }
 
@@ -734,7 +760,7 @@ void Dump_Central_directory_file_header(FILE* fin, FILE* fout, int n)
 	}
 	if (extra_field_length) {
 		Print_section(fout, "extra field", _ftelli64(fin), n);
-		Dump_bytes(fin, fout, extra_field_length);
+		Dump_extra_field(fin, fout, extra_field_length);
 	}
 	if (file_comment_length) {
 		Print_section(fout, "file comment", _ftelli64(fin), n);
