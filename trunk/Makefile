@@ -7,7 +7,7 @@
 #
 SOLUTION=zipdump.sln clip.sln
 TARGET=Release\zipdump.exe Release\clip.exe
-MANUAL=html\zipdump-manual.html html\clip-manual.html
+MANUAL=docs\zipdump-manual.html docs\clip-manual.html
 DOXYINDEX=html\index.html
 SRC=Makefile *.sln *.vcproj *.vsprops src/*
 
@@ -16,13 +16,13 @@ SRC=Makefile *.sln *.vcproj *.vsprops src/*
 #
 all:	build
 
-rel:	rebuild install zip
+rel:	rebuild build.man zip
 
 #-------------------------------------------------------------------------
 # COMMANDS
 #
 cleanall: clean
-	-del *.zip *.ncb *.user *.dat *.cache *.bak *.tmp $$*
+	-del *.zip *.ncb *.user *.dat *.cache *.bak *.tmp $$* *.usage *.example
 	-del src\*.aps
 	-del /q html\*.* Release\*.* Debug\*.*
 
@@ -35,23 +35,19 @@ rebuild: $(SOLUTION)
 
 build: $(TARGET)
 
+build.man: $(MANUAL)
+
 zip:
 	svn status
 	del win32cmdx-???.zip
 	zip win32cmdx-src.zip $(SRC) Doxyfile *.pl test/* -x *.aps
-	zip win32dmdx-exe.zip -j Release/*.exe $(MANUAL) html/*.css
+	zip win32dmdx-exe.zip -j $(TARGET) $(MANUAL) html/*.css
 
-install: install.target install.manual
-	copy html\*.css docs
-
-install.target: $(TARGET)
+install: $(TARGET)
 	!copy $** \home\bin
 
-install.manual: $(MANUAL)
-	!copy $** docs
-
 man: $(MANUAL)
-	start $**
+	!start $**
 
 doxy: $(DOXYINDEX)
 	start $**
@@ -64,25 +60,28 @@ verup:
 # BUILD
 #
 $(TARGET): $(SRC)
-	vcbuild $(@B).sln
+	vcbuild /nologo $(@B).sln "Release|Win32"
 
 #.........................................................................
 # DOCUMENT
 #
-$(DOXYINDEX): src/*.cpp Doxyfile usage.tmp example.tmp
+USAGE  =zipdump.usage clip.usage
+EXAMPLE=zipdump.example
+$(DOXYINDEX): src/*.cpp Doxyfile $(USAGE) $(EXAMPLE)
 	doxygen
 
-usage.tmp: $(TARGET) Makefile
-	-$(TARGET) -h 2>$@
+$(USAGE): Release\$*.exe Makefile
+	-Release\$*.exe -h 2>$@
 
-example.tmp: $(TARGET) Makefile
+zipdump.example: Release\$*.exe Makefile
 	del test.zip
 	zip test.zip *.pl
 	-echo zipdump -s test.zip >$@
-	-$(TARGET) -s test.zip >>$@
+	-$*.exe -s test.zip >>$@
 
 $(MANUAL): $(DOXYINDEX) Makefile
-	perl -n << html\main.html >$@
+	copy html\*.css docs
+	!perl -n << html\$(@F) >$@
 		next if /^<div class="navigation"/.../^<\/div>/;		# navi-bar ‚ğœ‹‚·‚é.
 		s/<img class="footer" src="doxygen.png".+\/>/doxygen/;	# footer ‚Ì doxygenƒƒS‚ğtext‚É’u‚«Š·‚¦‚é.
 		print;

@@ -1115,7 +1115,7 @@ next_arg:
 	return EXIT_SUCCESS;
 }
 //------------------------------------------------------------------------
-/**@mainpage zipdump.exe - dump zip file structure
+/**@page zipdump-manual zipdump.exe - dump zip file structure
 
 @version 1.0 (r17)
 
@@ -1144,10 +1144,10 @@ next_arg:
 	アインインストールするには、そのコピーしたファイルを削除してください。
 
 @section usage 使い方
-	@verbinclude usage.tmp
+	@verbinclude zipdump.usage
 
 @section example 出力例
-	@verbinclude example.tmp
+	@verbinclude zipdump.example
 
 @section todo 改善予定
 	- extra field の各データ内容をバイトダンプしているが、構造ダンプにする。
