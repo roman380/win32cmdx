@@ -367,4 +367,64 @@ show_help:			error_abort(gUsage2);
 	}
 	return EXIT_SUCCESS;
 }
+//------------------------------------------------------------------------
+/**@page clip-manual clip.exe - clipboard pipe
+
+@version 1.0 (r17)
+
+@author Hiroshi Kuno <http://code.google.com/p/win32cmdx/>
+
+@par License:
+	New BSD License
+	<br>Copyright &copy; 2001,2003,2010 by Hiroshi Kuno
+	<br>本ソフトウェアは無保証かつ無償で提供します。利用、再配布、改変は自由です。
+
+<hr>
+@section intro はじめに
+	clipは、クリップボードの内容をコマンドパイプラインに繋げるコマンドです。
+
+@section clip-func 機能
+	- 指定ファイルまたは標準入力を読み出し、クリップボードへ格納します。
+	- クリップボードの内容を読み出し、標準出力へ出力します。
+	- オプション動作として、空白文字を圧縮できます。
+
+@section env 動作環境
+	Windows2000以降を動作対象としています。
+	WindowsXP にて動作確認済み。
+
+@section install インストール方法
+	配布ファイル clip.exe を、PATHが通ったフォルダにコピーしてください。
+	アインインストールするには、そのコピーしたファイルを削除してください。
+
+@section usage 使い方
+	@verbinclude clip.usage
+
+@section clip-example 使用例
+	@verbatim
+C>dir | clip
+	dirの出力(つまり標準入力)をクリップボードにCOPYする
+
+C>clip file1.txt file2.txt
+	file1.txt, file2.txtの内容をクリップボードにCOPYする
+
+C>clip -paste
+	クリップボードの内容を表示する(標準出力に送る)
+
+C>clip -paste >out.txt
+	クリップボードの内容を out.txt に書き出す
+	@endverbatim
+
+@section todo 改善予定
+	- 画像ファイルを扱えるようにする.
+
+@section links リンク
+	- http://code.google.com/p/win32cmdx/ - clip開発サイト
+
+@section download ダウンロード
+	- http://code.google.com/p/win32cmdx/downloads/list - 最新版 version 1.0 (r17) [Jan 17, 2010]
+
+@section changelog 改訂履歴
+	@subsection Rel100 version-1.0 [Jan 17, 2010] 公開初版
+*/
+
 // clip.cpp - end.
