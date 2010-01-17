@@ -55,6 +55,7 @@ doxy: $(DOXYINDEX)
 verup:
 	svn up
 	perl -i.bak version-up.pl src/zipdump.cpp src/zipdump.*
+	perl -i.bak version-up.pl src/clip.cpp src/clip.*
 
 #.........................................................................
 # BUILD

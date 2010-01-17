@@ -12,10 +12,7 @@ using namespace std;
 // 型、定数、グローバル変数の定義
 //........................................................................
 // typedef and constants
-/** 無符号文字型の別名 */
 typedef unsigned char uchar;
-
-/** 無符号long型の別名 */
 typedef unsigned long ulong;
 
 //........................................................................
@@ -34,7 +31,7 @@ const char* gUsage  = "usage :clip [-h?cps] [FILE1 [FILE2 ...]]\n";
 
 /** detail help-message for options and version */
 const char* gUsage2 =
-	"  $Revision: 1.5 $\n"
+	"  version 1.5 (r22)\n"
 	"  -h -?     this help\n"
 	"  -c -copy  copy from STDIN or FILES to CLIPBOARD (default)\n"
 	"  -p -paste paste from CLIPBOARD to STDOUT\n"
@@ -370,7 +367,7 @@ show_help:			error_abort(gUsage2);
 //------------------------------------------------------------------------
 /**@page clip-manual clip.exe - clipboard pipe
 
-@version 1.0 (r17)
+@version 1.5 (r22)
 
 @author Hiroshi Kuno <http://code.google.com/p/win32cmdx/>
 
@@ -421,10 +418,10 @@ C>clip -paste >out.txt
 	- http://code.google.com/p/win32cmdx/ - clip開発サイト
 
 @section download ダウンロード
-	- http://code.google.com/p/win32cmdx/downloads/list - 最新版 version 1.0 (r17) [Jan 17, 2010]
+	- http://code.google.com/p/win32cmdx/downloads/list - 最新版 version 1.5 (r22) [Jan 17, 2010]
 
 @section changelog 改訂履歴
-	@subsection Rel100 version-1.0 [Jan 17, 2010] 公開初版
+	@subsection Rel100 version-1.5 [Jan 17, 2010] 公開初版
 */
 
 // clip.cpp - end.
