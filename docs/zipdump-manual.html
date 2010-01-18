@@ -77,7 +77,7 @@ ID : 0x4453, size : 101(0x0065)
 +00000050 : 22 2E 04 A6 54 20 62 78-EC 04 99 B7 92 41 08 C5 :"...T bx.....A..
 +00000060 : 3C 45 20 1B 00                                  :&lt;E ..           
 ID : 0x5455, size : 13(0x000D)
-+00000000 : 07 64 0A C7 4A CD 30 53-4B A8 E7 D9 4A          :.d..J.0SK...J   
++00000000 : 07 64 0A C7 4A 66 71 54-4B A8 E7 D9 4A          :.d..JfqTK...J   
 
 [File data #1] offset : 167(0x00000000000000A7)
 ; skip file data(126 bytes), use -f option to dump the data
@@ -110,7 +110,7 @@ ID : 0x4453, size : 101(0x0065)
 +00000050 : 22 2E 04 A6 54 20 62 78-EC 04 99 B7 92 41 08 C5 :"...T bx.....A..
 +00000060 : 3C 45 20 1B 00                                  :&lt;E ..           
 ID : 0x5455, size : 13(0x000D)
-+00000000 : 07 A8 5F C7 4A A8 2E 53-4B A8 E7 D9 4A          :.._.J..SK...J   
++00000000 : 07 A8 5F C7 4A 62 71 54-4B A8 E7 D9 4A          :.._.JbqTK...J   
 
 [File data #2] offset : 458(0x00000000000001CA)
 ; skip file data(414 bytes), use -f option to dump the data
@@ -118,7 +118,7 @@ ID : 0x5455, size : 13(0x000D)
 [Central file header #1] offset : 872(0x0000000000000368)
                 header signature : 0x02014B50
                  version made by : 0x0B17
-                                 * 11 - MVS (OS/390 - Z/OS)
+                                 * 11 - MVS (OS/390 - Z/OS) or NTFS(by Info-ZIP)
                                  * ver 2.3
        version needed to extract : 20
                                  * ver 2.0
@@ -151,7 +151,7 @@ ID : 0x5455, size : 5(0x0005)
 [Central file header #2] offset : 950(0x00000000000003B6)
                 header signature : 0x02014B50
                  version made by : 0x0B17
-                                 * 11 - MVS (OS/390 - Z/OS)
+                                 * 11 - MVS (OS/390 - Z/OS) or NTFS(by Info-ZIP)
                                  * ver 2.3
        version needed to extract : 20
                                  * ver 2.0
@@ -202,18 +202,26 @@ offset of start of central directory with respect to the starting disk number : 
 <ul>
 <li><a href="http://code.google.com/p/win32cmdx/">http://code.google.com/p/win32cmdx/</a> - zipdump開発サイト</li>
 <li><a href="http://www.pkware.com/documents/casestudies/APPNOTE.TXT">http://www.pkware.com/documents/casestudies/APPNOTE.TXT</a> - .ZIP File Format Specification</li>
+<li><a href="http://www.info-zip.org/doc/appnote-iz-latest.zip">http://www.info-zip.org/doc/appnote-iz-latest.zip</a> - Info-ZIP appnote</li>
 </ul>
 <h2><a class="anchor" id="download">
 ダウンロード</a></h2>
 <ul>
-<li><a href="http://code.google.com/p/win32cmdx/downloads/list">http://code.google.com/p/win32cmdx/downloads/list</a> - 最新版 version 1.0 (r17) [Jan 17, 2010]</li>
+<li><a href="http://code.google.com/p/win32cmdx/downloads/list">http://code.google.com/p/win32cmdx/downloads/list</a></li>
 </ul>
 <h2><a class="anchor" id="changelog">
 改訂履歴</a></h2>
-<h3><a class="anchor" id="Rel100">
-version-1.0 [Jan 17, 2010] 公開初版</a></h3>
+<ul>
+<li>version-1.1 [Jan xx, 2010] !!開発中<ul>
+<li>文字列ダンプにて、制御コードを ^@ 形式でエスケープする.</li>
+<li>big-endianマシン対応.</li>
+<li>Info-ZIPによる "version made by" の解釈を加える.</li>
+</ul>
+</li>
+<li>version-1.0 [Jan 17, 2010] 公開初版 </li>
+</ul>
 </div>
-<hr size="1"/><address style="text-align: right;"><small>Generated on Mon Jan 18 00:47:09 2010 for win32cmdx by&nbsp;
+<hr size="1"/><address style="text-align: right;"><small>Generated on Mon Jan 18 23:37:04 2010 for win32cmdx by&nbsp;
 <a href="http://www.doxygen.org/index.html">
 doxygen</a> 1.6.1 </small></address>
 </body>

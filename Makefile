@@ -52,10 +52,9 @@ man: $(MANUAL)
 doxy: $(DOXYINDEX)
 	start $**
 
-verup:
+zipdump.verup clip.verup:
 	svn up
-	perl -i.bak version-up.pl src/zipdump.cpp src/zipdump.*
-	perl -i.bak version-up.pl src/clip.cpp src/clip.*
+	perl -i.bak version-up.pl src/$*.cpp src/$*.*
 
 #.........................................................................
 # BUILD
