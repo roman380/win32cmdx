@@ -17,6 +17,7 @@ typedef unsigned char  uchar;
 typedef unsigned short ushort;
 typedef unsigned int   uint;
 typedef unsigned long  ulong;
+typedef unsigned __int8  uint8;
 typedef unsigned __int16 uint16;
 typedef unsigned __int32 uint32;
 typedef unsigned __int64 uint64;
@@ -135,24 +136,47 @@ FILE* OpenOutput(const char* inputfname, const char* extname)
 }
 
 //........................................................................
-// バイナリ入力処理系.
-inline bool Read16(FILE* fin, uint16& val)
+/// little endian read functions.
+//@{
+bool Read8(FILE* fin, uint8& val)
 {
 	return fread(&val, sizeof(val), 1, fin) == 1;
 }
 
-inline bool Read32(FILE* fin, uint32& val)
+bool Read16(FILE* fin, uint16& val)
 {
-	return fread(&val, sizeof(val), 1, fin) == 1;
+	uint8 lo, hi;
+	if (Read8(fin, lo) && Read8(fin, hi)) {
+		val = ((uint16)hi << 8) + lo;
+		return true;
+	}
+	return false;
 }
 
-inline bool Read64(FILE* fin, uint64& val)
+bool Read32(FILE* fin, uint32& val)
 {
-	return fread(&val, sizeof(val), 1, fin) == 1;
+	uint16 lo, hi;
+	if (Read16(fin, lo) && Read16(fin, hi)) {
+		val = ((uint32)hi << 16) + lo;
+		return true;
+	}
+	return false;
 }
+
+bool Read64(FILE* fin, uint64& val)
+{
+	uint32 lo, hi;
+	if (Read32(fin, lo) && Read32(fin, hi)) {
+		val = ((uint64)hi << 32) + lo;
+		return true;
+	}
+	return false;
+}
+//@}
 
 //........................................................................
-// ダンプ表示処理系.
+/// print field.
+//@{
 void Print_u(FILE* fout, const char* prompt, uint16 a)
 {
 	fprintf(fout, "%32s : %u\n", prompt, a);
@@ -202,7 +226,11 @@ void Print_note(FILE* fout, const char* note)
 {
 	fprintf(fout, "%32s * %s\n", "", note);
 }
+//@}
 
+//........................................................................
+/// print structure head.
+//@{
 void Print_section(FILE* fout, const char* section, __int64 offset, int n = -1)
 {
 	if (n < 0) {
@@ -222,6 +250,7 @@ void Print_header(FILE* fout, const char* section, uint32 signature, __int64 off
 	Print_section(fout, section, offset, n);
 	Print_x(fout, "header signature", signature);
 }
+//@}
 
 //------------------------------------------------------------------------
 // ZIP format処理関数群
