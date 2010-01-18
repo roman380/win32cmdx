@@ -78,7 +78,7 @@ zipdump.example: Release\$*.exe Makefile
 	del test.zip
 	zip test.zip *.pl
 	-echo zipdump -s test.zip >$@
-	-$*.exe -s test.zip >>$@
+	-Release\zipdump.exe -s test.zip >>$@
 
 $(MANUAL): $(DOXYINDEX) Makefile
 	copy html\*.css docs
