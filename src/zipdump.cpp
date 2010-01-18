@@ -509,7 +509,12 @@ void Dump_string(FILE* fin, FILE* fout, size_t length)
 {
 	int c;
 	while (length-- && (c = getc(fin)) != EOF) {
-		fputc(c, fout);
+		if (iscntrl(c)) {
+			fprintf(fout, "^%c", c + '@'); // print control-code as visible.
+		}
+		else {
+			fputc(c, fout);
+		}
 	}
 	fputc('\n', fout);
 }
