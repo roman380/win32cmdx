@@ -518,8 +518,8 @@ void Print_verion_made_by(FILE* fout, uint16 ver)
 	case 8:  Print_note(fout, "8 - Z-System"); break;
 	case 9:  Print_note(fout, "9 - CP/M"); break;
 	case 10: Print_note(fout, "10 - Windows NTFS"); break;
-	case 11: Print_note(fout, "11 - MVS (OS/390 - Z/OS)"); break;
-	case 12: Print_note(fout, "12 - VSE"); break;
+	case 11: Print_note(fout, "11 - MVS (OS/390 - Z/OS) or NTFS(by Info-ZIP)"); break;
+	case 12: Print_note(fout, "12 - VSE or SMS/QDOS(by Info-ZIP)"); break;
 	case 13: Print_note(fout, "13 - Acorn Risc"); break;
 	case 14: Print_note(fout, "14 - VFAT"); break;
 	case 15: Print_note(fout, "15 - alternate MVS"); break;
@@ -1189,12 +1189,17 @@ next_arg:
 @section links リンク
 	- http://code.google.com/p/win32cmdx/ - zipdump開発サイト
 	- http://www.pkware.com/documents/casestudies/APPNOTE.TXT - .ZIP File Format Specification
+	- http://www.info-zip.org/doc/appnote-iz-latest.zip - Info-ZIP appnote
 
 @section download ダウンロード
-	- http://code.google.com/p/win32cmdx/downloads/list - 最新版 version 1.0 (r17) [Jan 17, 2010]
+	- http://code.google.com/p/win32cmdx/downloads/list
 
 @section changelog 改訂履歴
-	@subsection Rel100 version-1.0 [Jan 17, 2010] 公開初版
+	- version-1.1 [Jan xx, 2010] !!開発中
+		- 文字列ダンプにて、制御コードを ^@ 形式でエスケープする.
+		- big-endianマシン対応.
+		- Info-ZIPによる "version made by" の解釈を加える.
+	- version-1.0 [Jan 17, 2010] 公開初版
 */
 
 // zipdump.cpp - end.
