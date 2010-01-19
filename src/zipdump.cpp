@@ -33,6 +33,9 @@ bool gIsFullDump = false;
 /** -q: quiet mode */
 bool gQuiet = false;
 
+/** -o: omit same hexdump line */
+bool gOmitSameHexDumpLine = false;
+
 /** -s: output to stdout */
 bool gIsStdout = false;
 
@@ -45,7 +48,7 @@ const char* gOutDir = NULL;
 //........................................................................
 // messages
 /** short help-message */
-const char* gUsage  = "usage :zipdump [-h?fqsr] [-d<DIR>] file1.zip file2.zip ...\n";
+const char* gUsage  = "usage :zipdump [-h?fqosr] [-d<DIR>] file1.zip file2.zip ...\n";
 
 /** detail help-message for options and version */
 const char* gUsage2 =
@@ -53,6 +56,7 @@ const char* gUsage2 =
 	"  -h -?      this help\n"
 	"  -f         full dump\n"
 	"  -q         quiet mode\n"
+	"  -o         omit same hexdump line\n"
 	"  -s         output to stdout instend of files(*.zipdump.txt)\n"
 	"  -r         recursive search under the input-file's folder(wildcard needed)\n"
 	"  -d<DIR>    output to DIR\n"
@@ -554,18 +558,29 @@ void Dump_string(FILE* fin, FILE* fout, uint64 length)
 void Dump_bytes(FILE* fin, FILE* fout, uint64 length)
 {
 	int c;
+	char prev[16], current[16];
 	char hex_dump[16*3+1];
 	char ascii_dump[16+1];
 	size_t i = 0;
 	uint64 offset = 0;
+	uint64 omit_lines = 0;
 	while (length-- && (c = getc(fin)) != EOF) {
 		++offset;
 		sprintf(hex_dump + i*3, "%02X%c", c, i==7 ? '-' : ' ');
 		ascii_dump[i] = ascii(c);
+		current[i] = c;
 		if (++i >= 16) {
-			ascii_dump[16] = 0;
-			fprintf(fout, "+%08I64X : %-48s:%-16s\n", offset-i, hex_dump, ascii_dump);
+			if (gOmitSameHexDumpLine && offset > 16 && memcmp(prev, current, sizeof(prev)) == 0) {
+				if (++omit_lines == 1)
+					fprintf(fout, " *\n"); // print omit mark.
+			}
+			else {
+				omit_lines = 0;
+				ascii_dump[16] = 0;
+				fprintf(fout, "+%08I64X : %-48s:%-16s\n", offset-i, hex_dump, ascii_dump);
+			}
 			i = 0;
+			memcpy(prev, current, sizeof(prev));
 		}
 	}//.endwhile
 	if (i != 0) {
@@ -1124,6 +1139,9 @@ show_help:			error_abort(gUsage2);
 				case 'q':
 					gQuiet = true;
 					break;
+				case 'o':
+					gOmitSameHexDumpLine = true;
+					break;
 				case 's':
 					gIsStdout = true;
 					break;
@@ -1206,6 +1224,7 @@ next_arg:
 		- Info-ZIPによる "version made by" の解釈を加える.
 		- フルダンプ時は、スキップデータもバイトダンプする.
 		- 未知のsignatureレコードを、未知レコードヘッダ＋スキップデータとして出力する.
+		- 同一内容のバイトダンプ行出力を抑制するオプション -o を追加した.
 	- version-1.0 [Jan 17, 2010] 公開初版
 */
 
