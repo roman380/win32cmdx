@@ -5,9 +5,9 @@
 #-------------------------------------------------------------------------
 # MACROS
 #
+TARGET  =zipdump.exe clip.exe
 SOLUTION=zipdump.sln clip.sln
-TARGET=Release\zipdump.exe Release\clip.exe
-MANUAL=docs\zipdump-manual.html docs\clip-manual.html
+MANUAL  =docs\zipdump-manual.html docs\clip-manual.html
 DOXYINDEX=html\index.html
 SRC=Makefile *.sln *.vcproj *.vsprops src/*
 
@@ -16,13 +16,13 @@ SRC=Makefile *.sln *.vcproj *.vsprops src/*
 #
 all:	build
 
-rel:	rebuild build.man zip
+rel:	rebuild man zip
 
 #-------------------------------------------------------------------------
 # COMMANDS
 #
 cleanall: clean
-	-del *.zip *.ncb *.user *.dat *.cache *.bak *.tmp $$* *.usage *.example
+	-del $(TARGET) *.zip *.ncb *.user *.dat *.cache *.bak *.tmp $$* *.usage *.example
 	-del src\*.aps
 	-del /q html\*.* Release\*.* Debug\*.*
 
@@ -34,8 +34,6 @@ rebuild: $(SOLUTION)
 	!vcbuild /rebuild /nologo $**
 
 build: $(TARGET)
-
-build.man: $(MANUAL)
 
 zip:
 	svn status
@@ -61,6 +59,8 @@ zipdump.verup clip.verup:
 #
 $(TARGET): $(SRC)
 	vcbuild /nologo $(@B).sln "Release|Win32"
+	copy Release\$@ $@
+	touch $@
 
 #.........................................................................
 # DOCUMENT
@@ -70,14 +70,14 @@ EXAMPLE=zipdump.example
 $(DOXYINDEX): src/*.cpp Doxyfile $(USAGE) $(EXAMPLE)
 	doxygen
 
-$(USAGE): Release\$*.exe Makefile
-	-Release\$*.exe -h 2>$@
+$(USAGE): $*.exe Makefile
+	-$*.exe -h 2>$@
 
-zipdump.example: Release\$*.exe Makefile
+zipdump.example: zipdump.exe Makefile
 	del test.zip
 	zip test.zip *.pl
 	-echo zipdump -s test.zip >$@
-	-Release\zipdump.exe -s test.zip >>$@
+	-zipdump.exe -s test.zip >>$@
 
 $(MANUAL): $(DOXYINDEX) Makefile
 	copy html\*.css docs
