@@ -257,7 +257,7 @@ void Print_header(FILE* fout, const char* section, uint32 signature, __int64 off
 //........................................................................
 void Dump_bytes(FILE* fin, FILE* fout, uint64 length);
 /** 次のZIP構造ヘッダまで読み飛ばす. */
-void SkipToNextPK(FILE* fin, FILE* fout)
+bool SkipToNextPK(FILE* fin, FILE* fout)
 {
 	__int64 skipsize = 0;
 	int c;
@@ -279,6 +279,7 @@ void SkipToNextPK(FILE* fin, FILE* fout)
 			Dump_bytes(fin, fout, skipsize);
 		}
 	}
+	return !feof(fin);
 }
 
 //........................................................................
@@ -978,9 +979,12 @@ void ZipDumpFile(FILE* fin, FILE* fout)
 	uint32 signature = 0;
 	int file_count = 0;
 	int dir_count = 0;
-	__int64 offset;
 
-	for (offset = _ftelli64(fin); Read32(fin, signature); offset = _ftelli64(fin)) {
+	while (SkipToNextPK(fin, fout)) {
+		__int64 offset = _ftelli64(fin);
+		if (!Read32(fin, signature)) {
+			continue;
+		}
 		switch (signature) {
 		case 0x04034b50:
 			Print_header(fout, "Local file header", signature, offset, ++file_count);
@@ -1011,12 +1015,10 @@ void ZipDumpFile(FILE* fin, FILE* fout)
 			Dump_End_of_central_directory_record(fin, fout);
 			break;
 		default:
-			fprintf(fout, "!! Unknown signature : 0x%08X\n", signature);
+			Print_header(fout, "!! Unknown record", signature, offset);
 			break;
 		}//.endswitch signature
-
-		SkipToNextPK(fin, fout);
-	}//.endwhile 
+	}//.endwhile NextPK
 }
 
 //........................................................................
@@ -1203,6 +1205,7 @@ next_arg:
 		- big-endianマシン対応.
 		- Info-ZIPによる "version made by" の解釈を加える.
 		- フルダンプ時は、スキップデータもバイトダンプする.
+		- 未知のsignatureレコードを、未知レコードヘッダ＋スキップデータとして出力する.
 	- version-1.0 [Jan 17, 2010] 公開初版
 */
 
