@@ -52,7 +52,7 @@ const char* gUsage  = "usage :zipdump [-h?fqosr] [-d<DIR>] file1.zip file2.zip .
 
 /** detail help-message for options and version */
 const char* gUsage2 =
-	"  version 1.0 (r17)\n"
+	"  version 1.1 (r33)\n"
 	"  -h -?      this help\n"
 	"  -f         full dump\n"
 	"  -q         quiet mode\n"
@@ -1177,7 +1177,7 @@ next_arg:
 //------------------------------------------------------------------------
 /**@page zipdump-manual zipdump.exe - dump zip file structure
 
-@version 1.0 (r17)
+@version 1.1 (r33)
 
 @author Hiroshi Kuno <http://code.google.com/p/win32cmdx/>
 
@@ -1221,7 +1221,7 @@ next_arg:
 	- http://code.google.com/p/win32cmdx/downloads/list
 
 @section changelog 改訂履歴
-	- version-1.1 [Jan xx, 2010] !!開発中
+	- version-1.1 [Jan 19, 2010] 最新版
 		- 文字列ダンプにて、制御コードを ^@ 形式でエスケープする.
 		- big-endianマシン対応.
 		- Info-ZIPによる "version made by" の解釈を加える.
