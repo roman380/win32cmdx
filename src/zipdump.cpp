@@ -255,27 +255,29 @@ void Print_header(FILE* fout, const char* section, uint32 signature, __int64 off
 //------------------------------------------------------------------------
 // ZIP format処理関数群
 //........................................................................
+void Dump_bytes(FILE* fin, FILE* fout, uint64 length);
 /** 次のZIP構造ヘッダまで読み飛ばす. */
 void SkipToNextPK(FILE* fin, FILE* fout)
 {
-	uint64 skipsize = 0;
+	__int64 skipsize = 0;
 	int c;
+	int prev = 0;
+
 	while ((c = getc(fin)) != EOF) {
+		if (prev = 'P' && c == 'K') {
+			_fseeki64(fin, -2, SEEK_CUR);
+			--skipsize;
+			break;
+		}
+		prev = c;
 		++skipsize;
-		if (c != 'P') {
-			continue;
-		}
-		if (getc(fin) != 'K') {
-			_fseeki64(fin, -1, SEEK_CUR);
-			continue;
-		}
-		// find "PK" marker.
-		_fseeki64(fin, -2, SEEK_CUR);
-		--skipsize;
-		break;
 	}
 	if (skipsize > 0) {
 		fprintf(fout, "!! Skip unknown data %I64u(0x%I64X) bytes\n", skipsize, skipsize);
+		if (gIsFullDump) {
+			_fseeki64(fin, -skipsize, SEEK_CUR);
+			Dump_bytes(fin, fout, skipsize);
+		}
 	}
 }
 
@@ -534,7 +536,7 @@ void Print_verion_made_by(FILE* fout, uint16 ver)
 }
 
 //........................................................................
-void Dump_string(FILE* fin, FILE* fout, size_t length)
+void Dump_string(FILE* fin, FILE* fout, uint64 length)
 {
 	int c;
 	while (length-- && (c = getc(fin)) != EOF) {
@@ -548,25 +550,26 @@ void Dump_string(FILE* fin, FILE* fout, size_t length)
 	fputc('\n', fout);
 }
 
-void Dump_bytes(FILE* fin, FILE* fout, size_t length)
+void Dump_bytes(FILE* fin, FILE* fout, uint64 length)
 {
 	int c;
 	char hex_dump[16*3+1];
 	char ascii_dump[16+1];
-	size_t i = 0, offset = 0;
+	size_t i = 0;
+	uint64 offset = 0;
 	while (length-- && (c = getc(fin)) != EOF) {
 		++offset;
 		sprintf(hex_dump + i*3, "%02X%c", c, i==7 ? '-' : ' ');
 		ascii_dump[i] = ascii(c);
 		if (++i >= 16) {
 			ascii_dump[16] = 0;
-			fprintf(fout, "+%p : %-48s:%-16s\n", offset-i, hex_dump, ascii_dump);
+			fprintf(fout, "+%08I64X : %-48s:%-16s\n", offset-i, hex_dump, ascii_dump);
 			i = 0;
 		}
 	}//.endwhile
 	if (i != 0) {
 		ascii_dump[i] = 0;
-		fprintf(fout, "+%p : %-48s:%-16s\n", offset-i, hex_dump, ascii_dump);
+		fprintf(fout, "+%08I64X : %-48s:%-16s\n", offset-i, hex_dump, ascii_dump);
 	}
 }
 
@@ -908,7 +911,7 @@ void Dump_Zip64_end_of_central_directory_record(FILE* fin, FILE* fout)
 	DUMP8 ("offset of start of central directory with respect to the starting disk number", w64, ux);
 
 	Print_section(fout, "zip64 extensible data sector", _ftelli64(fin));
-	Dump_bytes(fin, fout, (size_t)size - 2*2 - 4*2 - 8*4); // sizeフィールド以後の固定長を減ずる. Todo:size_tのキャストをなんとかすべき.
+	Dump_bytes(fin, fout, size - 2*2 - 4*2 - 8*4); // sizeフィールド以後の固定長を減ずる.
 }
 
 void Dump_Zip64_end_of_central_directory_locator(FILE* fin, FILE* fout)
@@ -1199,6 +1202,7 @@ next_arg:
 		- 文字列ダンプにて、制御コードを ^@ 形式でエスケープする.
 		- big-endianマシン対応.
 		- Info-ZIPによる "version made by" の解釈を加える.
+		- フルダンプ時は、スキップデータもバイトダンプする.
 	- version-1.0 [Jan 17, 2010] 公開初版
 */
 
