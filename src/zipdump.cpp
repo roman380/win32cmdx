@@ -264,7 +264,7 @@ void SkipToNextPK(FILE* fin, FILE* fout)
 	int prev = 0;
 
 	while ((c = getc(fin)) != EOF) {
-		if (prev = 'P' && c == 'K') {
+		if (prev == 'P' && c == 'K') {
 			_fseeki64(fin, -2, SEEK_CUR);
 			--skipsize;
 			break;
