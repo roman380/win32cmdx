@@ -11,7 +11,7 @@
 <div class="contents">
 
 
-<h1><a class="anchor" id="zipdump-manual">zipdump.exe - dump zip file structure </a></h1><dl class="version"><dt><b>Version:</b></dt><dd>1.0 (r17)</dd></dl>
+<h1><a class="anchor" id="zipdump-manual">zipdump.exe - dump zip file structure </a></h1><dl class="version"><dt><b>Version:</b></dt><dd>1.1 (r33)</dd></dl>
 <dl class="author"><dt><b>Author:</b></dt><dd>Hiroshi Kuno &lt;<a href="http://code.google.com/p/win32cmdx/">http://code.google.com/p/win32cmdx/</a>&gt;</dd></dl>
 <dl class="user"><dt><b>License:</b></dt><dd>New BSD License <br/>
 Copyright &copy; 2010 by Hiroshi Kuno <br/>
@@ -34,11 +34,12 @@ Copyright &copy; 2010 by Hiroshi Kuno <br/>
 <p>配布ファイル zipdump.exe を、PATHが通ったフォルダにコピーしてください。 アインインストールするには、そのコピーしたファイルを削除してください。</p>
 <h2><a class="anchor" id="usage">
 使い方</a></h2>
-<div class="fragment"><pre class="fragment">usage :zipdump [-h?fqsr] [-d&lt;DIR&gt;] file1.zip file2.zip ...
-  version 1.0 (r17)
+<div class="fragment"><pre class="fragment">usage :zipdump [-h?fqosr] [-d&lt;DIR&gt;] file1.zip file2.zip ...
+  version 1.1 (r33)
   -h -?      this help
   -f         full dump
   -q         quiet mode
+  -o         omit same hexdump line
   -s         output to stdout instend of files(*.zipdump.txt)
   -r         recursive search under the input-file's folder(wildcard needed)
   -d&lt;DIR&gt;    output to DIR
@@ -77,7 +78,7 @@ ID : 0x4453, size : 101(0x0065)
 +00000050 : 22 2E 04 A6 54 20 62 78-EC 04 99 B7 92 41 08 C5 :"...T bx.....A..
 +00000060 : 3C 45 20 1B 00                                  :&lt;E ..           
 ID : 0x5455, size : 13(0x000D)
-+00000000 : 07 64 0A C7 4A 66 71 54-4B A8 E7 D9 4A          :.d..JfqTK...J   
++00000000 : 07 64 0A C7 4A 81 C7 55-4B A8 E7 D9 4A          :.d..J..UK...J   
 
 [File data #1] offset : 167(0x00000000000000A7)
 ; skip file data(126 bytes), use -f option to dump the data
@@ -110,7 +111,7 @@ ID : 0x4453, size : 101(0x0065)
 +00000050 : 22 2E 04 A6 54 20 62 78-EC 04 99 B7 92 41 08 C5 :"...T bx.....A..
 +00000060 : 3C 45 20 1B 00                                  :&lt;E ..           
 ID : 0x5455, size : 13(0x000D)
-+00000000 : 07 A8 5F C7 4A 62 71 54-4B A8 E7 D9 4A          :.._.JbqTK...J   
++00000000 : 07 A8 5F C7 4A 11 CA 55-4B A8 E7 D9 4A          :.._.J..UK...J   
 
 [File data #2] offset : 458(0x00000000000001CA)
 ; skip file data(414 bytes), use -f option to dump the data
@@ -212,16 +213,19 @@ offset of start of central directory with respect to the starting disk number : 
 <h2><a class="anchor" id="changelog">
 改訂履歴</a></h2>
 <ul>
-<li>version-1.1 [Jan xx, 2010] !!開発中<ul>
+<li>version-1.1 [Jan 19, 2010] 最新版<ul>
 <li>文字列ダンプにて、制御コードを ^@ 形式でエスケープする.</li>
 <li>big-endianマシン対応.</li>
 <li>Info-ZIPによる "version made by" の解釈を加える.</li>
+<li>フルダンプ時は、スキップデータもバイトダンプする.</li>
+<li>未知のsignatureレコードを、未知レコードヘッダ＋スキップデータとして出力する.</li>
+<li>同一内容のバイトダンプ行出力を抑制するオプション -o を追加した.</li>
 </ul>
 </li>
 <li>version-1.0 [Jan 17, 2010] 公開初版 </li>
 </ul>
 </div>
-<hr size="1"/><address style="text-align: right;"><small>Generated on Mon Jan 18 23:37:04 2010 for win32cmdx by&nbsp;
+<hr size="1"/><address style="text-align: right;"><small>Generated on Wed Jan 20 00:07:59 2010 for win32cmdx by&nbsp;
 <a href="http://www.doxygen.org/index.html">
 doxygen</a> 1.6.1 </small></address>
 </body>
