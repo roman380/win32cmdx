@@ -190,6 +190,10 @@
 			</File>
 		</Filter>
 		<File
+			RelativePath=".\docs\Info-ZIP-appnote-20040908-iz.txt"
+			>
+		</File>
+		<File
 			RelativePath=".\docs\PKZIP-APPNOTE_6.3.2.txt"
 			>
 		</File>

@@ -12,7 +12,8 @@
 //------------------------------------------------------------------------
 // 型、定数、グローバル変数の定義
 //........................................................................
-// typedef and constants
+//@{
+/** alias of integer type */
 typedef unsigned char  uchar;
 typedef unsigned short ushort;
 typedef unsigned int   uint;
@@ -21,12 +22,14 @@ typedef unsigned __int8  uint8;
 typedef unsigned __int16 uint16;
 typedef unsigned __int32 uint32;
 typedef unsigned __int64 uint64;
+//@}
 
-#define MY_MAX_PATH	(_MAX_PATH * 2)	// Unicodeで_MAX_PATH文字なので、MBCSではその倍が必要.
+/** max file/path name length. Unicodeで_MAX_PATH文字なので、MBCSではその倍の長さとなる可能性がある. */
+#define MY_MAX_PATH	(_MAX_PATH * 2)
 
 //........................................................................
-// global variables
-
+//!@name option settings
+//@{
 /** -f: full dump */
 bool gIsFullDump = false;
 
@@ -44,9 +47,11 @@ bool gIsRecursive = false;
 
 /** -d<DIR>: output folder */
 const char* gOutDir = NULL;
+//@}
 
 //........................................................................
-// messages
+//!@name messages
+//@{
 /** short help-message */
 const char* gUsage  = "usage :zipdump [-h?fqosr] [-d<DIR>] file1.zip file2.zip ...\n";
 
@@ -60,12 +65,15 @@ const char* gUsage2 =
 	"  -s         output to stdout instend of files(*.zipdump.txt)\n"
 	"  -r         recursive search under the input-file's folder(wildcard needed)\n"
 	"  -d<DIR>    output to DIR\n"
-	"  fileN.cpp  input-files. wildcard OK\n";
+	"  fileN.cpp  input-files. wildcard OK\n"
+	;
+//@}
 
 //------------------------------------------------------------------------
 // 汎用関数群
 //........................................................................
-// エラー処理系.
+//!@name エラー処理系.
+//@{
 /** usageとエラーメッセージを表示後に、exitする */
 void error_abort(const char* msg)
 {
@@ -83,9 +91,11 @@ void print_win32error(const char* msg)
 	::FormatMessageA(FORMAT_MESSAGE_FROM_SYSTEM, NULL, win32error, 0, buf, sizeof(buf), NULL);
 	fprintf(stderr, "%s: Win32Error(%d) %s", msg, win32error, buf);
 }
+//@}
 
 //........................................................................
-// 文字列処理系.
+//!@name 文字列処理系.
+//@{
 /** s1とs2は等しいか? */
 inline bool strequ(const char* s1, const char* s2)
 {
@@ -97,9 +107,11 @@ inline int ascii(int c)
 {
 	return (!iscntrl(c) && isprint(c)) ? c : '.';
 }
+//@}
 
 //........................................................................
-// ファイル処理系.
+//!@name ファイル処理系.
+//@{
 /** 入力ファイルオープン.
  * オープン失敗時にはリターンしないで、ここで終了する.
  */
@@ -138,9 +150,10 @@ FILE* OpenOutput(const char* inputfname, const char* extname)
 	}
 	return fp;
 }
+//@}
 
 //........................................................................
-/// little endian read functions.
+//!@name little endian read.
 //@{
 bool Read8(FILE* fin, uint8& val)
 {
@@ -179,7 +192,7 @@ bool Read64(FILE* fin, uint64& val)
 //@}
 
 //........................................................................
-/// print field.
+//!@name print a field.
 //@{
 void Print_u(FILE* fout, const char* prompt, uint16 a)
 {
@@ -233,7 +246,7 @@ void Print_note(FILE* fout, const char* note)
 //@}
 
 //........................................................................
-/// print structure head.
+//!@name print a structure head.
 //@{
 void Print_section(FILE* fout, const char* section, __int64 offset, int n = -1)
 {
@@ -256,38 +269,22 @@ void Print_header(FILE* fout, const char* section, uint32 signature, __int64 off
 }
 //@}
 
+//........................................................................
+//!@name dump a field MACRO.
+//@{
+#define DUMP2(prompt,var,format)			if (Read16(fin, var)) { Print_##format(fout, prompt, var); }
+#define DUMP4(prompt,var,format)			if (Read32(fin, var)) { Print_##format(fout, prompt, var); }
+#define DUMP8(prompt,var,format)			if (Read64(fin, var)) { Print_##format(fout, prompt, var); }
+#define DUMP2x(prompt,var,format,detail)	if (Read16(fin, var)) { Print_##format(fout, prompt, var); if (!gQuiet) { detail; } }
+#define DUMP4x(prompt,var,format,detail)	if (Read32(fin, var)) { Print_##format(fout, prompt, var); if (!gQuiet) { detail; } }
+#define DUMP8x(prompt,var,format,detail)	if (Read64(fin, var)) { Print_##format(fout, prompt, var); if (!gQuiet) { detail; } }
+//@}
+
 //------------------------------------------------------------------------
 // ZIP format処理関数群
 //........................................................................
-void Dump_bytes(FILE* fin, FILE* fout, uint64 length);
-/** 次のZIP構造ヘッダまで読み飛ばす. */
-bool SkipToNextPK(FILE* fin, FILE* fout)
-{
-	__int64 skipsize = 0;
-	int c;
-	int prev = 0;
-
-	while ((c = getc(fin)) != EOF) {
-		if (prev == 'P' && c == 'K') {
-			_fseeki64(fin, -2, SEEK_CUR);
-			--skipsize;
-			break;
-		}
-		prev = c;
-		++skipsize;
-	}
-	if (skipsize > 0) {
-		fprintf(fout, "!! Skip unknown data %I64u(0x%I64X) bytes\n", skipsize, skipsize);
-		if (gIsFullDump) {
-			_fseeki64(fin, -skipsize, SEEK_CUR);
-			Dump_bytes(fin, fout, skipsize);
-		}
-	}
-	return !feof(fin);
-}
-
-//........................................................................
-// ZIPフィールド内容のダンプ処理.
+//!@name ZIPフィールド内容のダンプ処理.
+//@{
 void Print_date_and_time(FILE* fout, uint16 mod_time, uint16 mod_date)
 {
 	// use windows API
@@ -539,8 +536,11 @@ void Print_verion_made_by(FILE* fout, uint16 ver)
 
 	Print_version(fout, ver & 0xff);
 }
+//@}
 
 //........................................................................
+//!@name generic dump
+//@{
 void Dump_string(FILE* fin, FILE* fout, uint64 length)
 {
 	int c;
@@ -588,17 +588,38 @@ void Dump_bytes(FILE* fin, FILE* fout, uint64 length)
 		fprintf(fout, "+%08I64X : %-48s:%-16s\n", offset-i, hex_dump, ascii_dump);
 	}
 }
+//@}
 
 //........................................................................
-// ZIP構造ヘッダのダンプ処理.
-#define DUMP2(prompt,var,format)			if (Read16(fin, var)) { Print_##format(fout, prompt, var); }
-#define DUMP4(prompt,var,format)			if (Read32(fin, var)) { Print_##format(fout, prompt, var); }
-#define DUMP8(prompt,var,format)			if (Read64(fin, var)) { Print_##format(fout, prompt, var); }
+/** 次のZIP構造ヘッダまで読み飛ばす. */
+bool SkipToNextPK(FILE* fin, FILE* fout)
+{
+	__int64 skipsize = 0;
+	int c;
+	int prev = 0;
 
-#define DUMP2x(prompt,var,format,detail)	if (Read16(fin, var)) { Print_##format(fout, prompt, var); if (!gQuiet) { detail; } }
-#define DUMP4x(prompt,var,format,detail)	if (Read32(fin, var)) { Print_##format(fout, prompt, var); if (!gQuiet) { detail; } }
-#define DUMP8x(prompt,var,format,detail)	if (Read64(fin, var)) { Print_##format(fout, prompt, var); if (!gQuiet) { detail; } }
+	while ((c = getc(fin)) != EOF) {
+		if (prev == 'P' && c == 'K') {
+			_fseeki64(fin, -2, SEEK_CUR);
+			--skipsize;
+			break;
+		}
+		prev = c;
+		++skipsize;
+	}
+	if (skipsize > 0) {
+		fprintf(fout, "!! Skip unknown data %I64u(0x%I64X) bytes\n", skipsize, skipsize);
+		if (gIsFullDump) {
+			_fseeki64(fin, -skipsize, SEEK_CUR);
+			Dump_bytes(fin, fout, skipsize);
+		}
+	}
+	return !feof(fin);
+}
 
+//........................................................................
+//!@name ZIP構造ヘッダのダンプ処理.
+//@{
 void Dump_extra_field(FILE* fin, FILE* fout, size_t length)
 {
 /*
@@ -987,7 +1008,9 @@ void Dump_End_of_central_directory_record(FILE* fin, FILE* fout)
 		Dump_string(fin, fout, zipfile_comment_length);
 	}
 }
+//@}
 
+//........................................................................
 /** finからのPKZIPファイル入力に対して、foutにダンプ出力する. */
 void ZipDumpFile(FILE* fin, FILE* fout)
 {
