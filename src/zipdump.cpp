@@ -194,6 +194,11 @@ bool Read64(FILE* fin, uint64& val)
 //........................................................................
 //!@name print a field.
 //@{
+void Print_u(FILE* fout, const char* prompt, uint8 a)
+{
+	fprintf(fout, "%32s : %u\n", prompt, a);
+}
+
 void Print_u(FILE* fout, const char* prompt, uint16 a)
 {
 	fprintf(fout, "%32s : %u\n", prompt, a);
@@ -267,14 +272,23 @@ void Print_header(FILE* fout, const char* section, uint32 signature, __int64 off
 	Print_section(fout, section, offset, n);
 	Print_x(fout, "header signature", signature);
 }
+
+void Print_extra(FILE* fout, const char* section, uint16 id, uint16 length)
+{
+	fprintf(fout, "\n[%s]\n", section);
+	Print_x(fout, "extra tag", id);
+	Print_ux(fout, "total data size", length);
+}
 //@}
 
 //........................................................................
 //!@name dump a field MACRO.
 //@{
+#define DUMP1(prompt,var,format)			if (Read8 (fin, var)) { Print_##format(fout, prompt, var); }
 #define DUMP2(prompt,var,format)			if (Read16(fin, var)) { Print_##format(fout, prompt, var); }
 #define DUMP4(prompt,var,format)			if (Read32(fin, var)) { Print_##format(fout, prompt, var); }
 #define DUMP8(prompt,var,format)			if (Read64(fin, var)) { Print_##format(fout, prompt, var); }
+#define DUMP1x(prompt,var,format,detail)	if (Read8 (fin, var)) { Print_##format(fout, prompt, var); if (!gQuiet) { detail; } }
 #define DUMP2x(prompt,var,format,detail)	if (Read16(fin, var)) { Print_##format(fout, prompt, var); if (!gQuiet) { detail; } }
 #define DUMP4x(prompt,var,format,detail)	if (Read32(fin, var)) { Print_##format(fout, prompt, var); if (!gQuiet) { detail; } }
 #define DUMP8x(prompt,var,format,detail)	if (Read64(fin, var)) { Print_##format(fout, prompt, var); if (!gQuiet) { detail; } }
@@ -620,6 +634,67 @@ bool SkipToNextPK(FILE* fin, FILE* fout)
 //........................................................................
 //!@name ZIP構造ヘッダのダンプ処理.
 //@{
+void Dump_extra_WindowsNT_security_descriptor(FILE* fin, FILE* fout, size_t length)
+{
+/*
+         -Windows NT Security Descriptor Extra Field (0x4453):
+          ===================================================
+
+          The following is the layout of the NT Security Descriptor (another
+          type of ACL) extra block.  (Last Revision 19960922)
+
+          Local-header version:
+
+          Value         Size        Description
+          -----         ----        -----------
+  (SD)    0x4453        Short       tag for this extra block type ("SD")
+          TSize         Short       total data size for this block
+          BSize         Long        uncompressed SD data size
+          Version       Byte        version of uncompressed SD data format
+          CType         Short       compression type
+          EACRC         Long        CRC value for uncompressed SD data
+          (var.)        variable    compressed SD data
+
+          Central-header version:
+
+          Value         Size        Description
+          -----         ----        -----------
+  (SD)    0x4453        Short       tag for this extra block type ("SD")
+          TSize         Short       total data size for this block (4)
+          BSize         Long        size of uncompressed local SD data
+*/
+	uint32 w32;
+	uint8 ver;
+	uint16 w16;
+	DUMP4("uncompressed SD data size", w32, ux);
+	if (length <= 4) return;
+	length -= 4;
+
+	DUMP1("version",                   ver, u);
+	DUMP2("compression type",          w16, u);
+	DUMP4("CRC",                       w32, x);
+	if (length <= 1+2+4) return;
+	length -= 1+2+4;
+
+	fputs("compressed SD data:\n", fout);
+	Dump_bytes(fin, fout, length);
+}
+
+void Dump_extra_timestamp(FILE* fin, FILE* fout, size_t length)
+{
+	Dump_bytes(fin, fout, length); // todo: dump field
+}
+
+void Dump_extra_UnicodeComment(FILE* fin, FILE* fout, size_t length)
+{
+	Dump_bytes(fin, fout, length); // todo: dump field
+}
+
+void Dump_extra_UnicodePath(FILE* fin, FILE* fout, size_t length)
+{
+	Dump_bytes(fin, fout, length); // todo: dump field
+}
+
 void Dump_extra_field(FILE* fin, FILE* fout, size_t length)
 {
 /*
@@ -640,8 +715,28 @@ void Dump_extra_field(FILE* fin, FILE* fout, size_t length)
 	uint16 id, size;
 	size_t offset = 0;
 	while (offset < length && Read16(fin, id) && Read16(fin, size)) {
-		fprintf(fout, "ID : 0x%04X, size : %d(0x%04X)\n", id, size, size);
-		Dump_bytes(fin, fout, size);
+		switch (id) {
+		case 0x4453:
+			Print_extra(fout, "Windows NT Security Descriptor Extra Field", id, size);
+			Dump_extra_WindowsNT_security_descriptor(fin, fout, size);
+			break;
+		case 0x5455:
+			Print_extra(fout, "Extended Timestamp Extra Field", id, size);
+			Dump_extra_timestamp(fin, fout, size);
+			break;
+		case 0x6375:
+			Print_extra(fout, "Info-ZIP Unicode Comment Extra Field", id, size);
+			Dump_extra_UnicodeComment(fin, fout, size);
+			break;
+		case 0x7075:
+			Print_extra(fout, "Info-ZIP Unicode Path Extra Field", id, size);
+			Dump_extra_UnicodePath(fin, fout, size);
+			break;
+		default:
+			Print_extra(fout, "!! Unknown Extra Field", id, size);
+			Dump_bytes(fin, fout, size);
+			break;
+		}
 		offset += size + 4;
 	}
 }
