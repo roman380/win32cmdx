@@ -5,6 +5,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
+#include <locale.h>
 #include <io.h>
 #include <ctype.h>
 //using namespace std;
@@ -214,6 +216,11 @@ void Print_u(FILE* fout, const char* prompt, uint64 a)
 	fprintf(fout, "%32s : %I64u\n", prompt, a);
 }
 
+void Print_x(FILE* fout, const char* prompt, uint8 a)
+{
+	fprintf(fout, "%32s : 0x%02X\n", prompt, a);
+}
+
 void Print_x(FILE* fout, const char* prompt, uint16 a)
 {
 	fprintf(fout, "%32s : 0x%04X\n", prompt, a);
@@ -227,6 +234,11 @@ void Print_x(FILE* fout, const char* prompt, uint32 a)
 void Print_x(FILE* fout, const char* prompt, uint64 a)
 {
 	fprintf(fout, "%32s : 0x%016I64X\n", prompt, a);
+}
+
+void Print_ux(FILE* fout, const char* prompt, uint8 a)
+{
+	fprintf(fout, "%32s : %u(0x%02X)\n", prompt, a, a);
 }
 
 void Print_ux(FILE* fout, const char* prompt, uint16 a)
@@ -275,9 +287,9 @@ void Print_header(FILE* fout, const char* section, uint32 signature, __int64 off
 
 void Print_extra(FILE* fout, const char* section, uint16 id, uint16 length)
 {
-	fprintf(fout, "\n[%s]\n", section);
+	fprintf(fout, "\n[-%s]\n", section);
 	Print_x(fout, "extra tag", id);
-	Print_ux(fout, "total data size", length);
+	Print_ux(fout, "extra size", length);
 }
 //@}
 
@@ -299,6 +311,15 @@ void Print_extra(FILE* fout, const char* section, uint16 id, uint16 length)
 //........................................................................
 //!@name ZIPフィールド内容のダンプ処理.
 //@{
+void Print_UTC(FILE* fout, uint32 time)
+{
+	time_t t = (time_t) time;
+	char buf[200];
+	size_t n = strftime(buf, sizeof(buf), "%Y-%m-%dT%H:%M:%S UTC", gmtime(&t));
+	size_t m = strftime(buf + n, sizeof(buf)-n, " (%c %z)", localtime(&t));
+	Print_note(fout, buf);
+}
+
 void Print_date_and_time(FILE* fout, uint16 mod_time, uint16 mod_date)
 {
 	// use windows API
@@ -602,9 +623,34 @@ void Dump_bytes(FILE* fin, FILE* fout, uint64 length)
 		fprintf(fout, "+%08I64X : %-48s:%-16s\n", offset-i, hex_dump, ascii_dump);
 	}
 }
+
+void Dump_if_fulldump(FILE* fin, FILE* fout, const char* caption, uint64 length)
+{
+	if (gIsFullDump) {
+		Dump_bytes(fin, fout, length);
+	}
+	else {
+		_fseeki64(fin, length, SEEK_CUR);
+		if (!gQuiet) fprintf(fout, "; skip %s(%I64u bytes), use -f option to dump the data\n", caption, length);
+	}
+}
 //@}
 
 //........................................................................
+//!@name 未知データのスキップ処理.
+//@{
+/** 指定のバイト数を読み飛ばす */
+void SkipUnknownData(FILE* fin, FILE* fout, uint64 skipsize)
+{
+	fprintf(fout, "!! Skip unknown data %I64u(0x%I64X) bytes\n", skipsize, skipsize);
+	if (gIsFullDump) {
+		Dump_bytes(fin, fout, skipsize);
+	}
+	else {
+		_fseeki64(fin, skipsize, SEEK_CUR);
+	}
+}
+
 /** 次のZIP構造ヘッダまで読み飛ばす. */
 bool SkipToNextPK(FILE* fin, FILE* fout)
 {
@@ -622,19 +668,17 @@ bool SkipToNextPK(FILE* fin, FILE* fout)
 		++skipsize;
 	}
 	if (skipsize > 0) {
-		fprintf(fout, "!! Skip unknown data %I64u(0x%I64X) bytes\n", skipsize, skipsize);
-		if (gIsFullDump) {
-			_fseeki64(fin, -skipsize, SEEK_CUR);
-			Dump_bytes(fin, fout, skipsize);
-		}
+		_fseeki64(fin, -skipsize, SEEK_CUR);
+		SkipUnknownData(fin, fout, skipsize);
 	}
 	return !feof(fin);
 }
+//@}
 
 //........................................................................
 //!@name ZIP構造ヘッダのダンプ処理.
 //@{
-void Dump_extra_WindowsNT_security_descriptor(FILE* fin, FILE* fout, size_t length)
+void Dump_extra_WindowsNT_SD(FILE* fin, FILE* fout, size_t length)
 {
 /*
          -Windows NT Security Descriptor Extra Field (0x4453):
@@ -666,33 +710,175 @@ void Dump_extra_WindowsNT_security_descriptor(FILE* fin, FILE* fout, size_t leng
 	uint32 w32;
 	uint8 ver;
 	uint16 w16;
-	DUMP4("uncompressed SD data size", w32, ux);
-	if (length <= 4) return;
-	length -= 4;
+	size_t offset = 0;
 
-	DUMP1("version",                   ver, u);
-	DUMP2("compression type",          w16, u);
-	DUMP4("CRC",                       w32, x);
-	if (length <= 1+2+4) return;
-	length -= 1+2+4;
+	DUMP4("uncompressed SD data size", w32, ux); offset += 4;
+	if (length <= offset) return;
 
-	fputs("compressed SD data:\n", fout);
-	Dump_bytes(fin, fout, length);
+	DUMP1("version",                   ver, u); offset += 1;
+	DUMP2("compression type",          w16, u); offset += 2;
+	DUMP4("crc",                       w32, x); offset += 4;
+
+	if (length > offset) {
+		fputs("compressed SD data:\n", fout);
+		Dump_if_fulldump(fin, fout, "compressed SD data", length - offset);
+	}
 }
 
-void Dump_extra_timestamp(FILE* fin, FILE* fout, size_t length)
+void Dump_extra_ExtendedTimestamp(FILE* fin, FILE* fout, size_t length)
 {
-	Dump_bytes(fin, fout, length); // todo: dump field
+/*
+         -Extended Timestamp Extra Field:
+          ==============================
+
+          The following is the layout of the extended-timestamp extra block.
+          (Last Revision 19970118)
+
+          Local-header version:
+
+          Value         Size        Description
+          -----         ----        -----------
+  (time)  0x5455        Short       tag for this extra block type ("UT")
+          TSize         Short       total data size for this block
+          Flags         Byte        info bits
+          (ModTime)     Long        time of last modification (UTC/GMT)
+          (AcTime)      Long        time of last access (UTC/GMT)
+          (CrTime)      Long        time of original creation (UTC/GMT)
+
+          Central-header version:
+
+          Value         Size        Description
+          -----         ----        -----------
+  (time)  0x5455        Short       tag for this extra block type ("UT")
+          TSize         Short       total data size for this block
+          Flags         Byte        info bits (refers to local header!)
+          (ModTime)     Long        time of last modification (UTC/GMT)
+*/
+	uint8 flags;
+	uint32 time;
+	size_t offset = 0;
+
+	DUMP1("Flags", flags, x); offset += 1;
+
+	if ((flags & 1) && length > offset) { DUMP4x("last mod time",    time, x, Print_UTC(fout, time)); offset += 4; }
+	if ((flags & 2) && length > offset) { DUMP4x("last access time", time, x, Print_UTC(fout, time)); offset += 4; }
+	if ((flags & 4) && length > offset) { DUMP4x("last create time", time, x, Print_UTC(fout, time)); offset += 4; }
+
+	if (length > offset) {
+		SkipUnknownData(fin, fout, length - offset);
+	}
 }
 
 void Dump_extra_UnicodeComment(FILE* fin, FILE* fout, size_t length)
 {
-	Dump_bytes(fin, fout, length); // todo: dump field
+/*
+         -Info-ZIP Unicode Comment Extra Field (0x6375):
+
+          Stores the UTF-8 version of the file comment as stored in the
+          central directory header. (Last Revision 20070912)
+
+          Value         Size        Description
+          -----         ----        -----------
+   (UCom) 0x6375        Short       tag for this extra block type ("uc")
+          TSize         Short       total data size for this block
+          Version       1 byte      version of this extra field, currently 1
+          ComCRC32      4 bytes     Comment Field CRC32 Checksum
+          UnicodeCom    Variable    UTF-8 version of the entry comment
+
+          Currently Version is set to the number 1.  If there is a need
+          to change this field, the version will be incremented.  Changes
+          may not be backward compatible so this extra field should not be
+          used if the version is not recognized.
+
+          The ComCRC32 is the standard zip CRC32 checksum of the File Comment
+          field in the central directory header.  This is used to verify that
+          the comment field has not changed since the Unicode Comment extra field
+          was created.  This can happen if a utility changes the File Comment 
+          field but does not update the UTF-8 Comment extra field.  If the CRC 
+          check fails, this Unicode Comment extra field should be ignored and 
+          the File Comment field in the header should be used instead.
+
+          The UnicodeCom field is the UTF-8 version of the File Comment field
+          in the header.  As UnicodeCom is defined to be UTF-8, no UTF-8 byte
+          order mark (BOM) is used.  The length of this field is determined by
+          subtracting the size of the previous fields from TSize.  If both the
+          File Name and Comment fields are UTF-8, the new General Purpose Bit
+          Flag, bit 11 (Language encoding flag (EFS)), can be used to indicate
+          both the header File Name and Comment fields are UTF-8 and, in this
+          case, the Unicode Path and Unicode Comment extra fields are not
+          needed and should not be created.  Note that, for backward
+          compatibility, bit 11 should only be used if the native character set
+          of the paths and comments being zipped up are already in UTF-8. It is
+          expected that the same file comment storage method, either general
+          purpose bit 11 or extra fields, be used in both the Local and Central
+          Directory Header for a file.
+*/
+	uint8 ver;
+	uint32 w32;
+	size_t offset = 0;
+
+	DUMP1("version", ver, u); offset += 1;
+	DUMP4("crc",     w32, x); offset += 4;
+	if (length > offset) {
+		fputs("entry comment encoded UTF-8:\n", fout);
+		Dump_bytes(fin, fout, length - offset);
+	}
 }
 
 void Dump_extra_UnicodePath(FILE* fin, FILE* fout, size_t length)
 {
-	Dump_bytes(fin, fout, length); // todo: dump field
+/*
+         -Info-ZIP Unicode Path Extra Field (0x7075):
+
+          Stores the UTF-8 version of the file name field as stored in the
+          local header and central directory header. (Last Revision 20070912)
+
+          Value         Size        Description
+          -----         ----        -----------
+  (UPath) 0x7075        Short       tag for this extra block type ("up")
+          TSize         Short       total data size for this block
+          Version       1 byte      version of this extra field, currently 1
+          NameCRC32     4 bytes     File Name Field CRC32 Checksum
+          UnicodeName   Variable    UTF-8 version of the entry File Name
+
+          Currently Version is set to the number 1.  If there is a need
+          to change this field, the version will be incremented.  Changes
+          may not be backward compatible so this extra field should not be
+          used if the version is not recognized.
+
+          The NameCRC32 is the standard zip CRC32 checksum of the File Name
+          field in the header.  This is used to verify that the header
+          File Name field has not changed since the Unicode Path extra field
+          was created.  This can happen if a utility renames the File Name but
+          does not update the UTF-8 path extra field.  If the CRC check fails,
+          this UTF-8 Path Extra Field should be ignored and the File Name field
+          in the header should be used instead.
+
+          The UnicodeName is the UTF-8 version of the contents of the File Name
+          field in the header.  As UnicodeName is defined to be UTF-8, no UTF-8
+          byte order mark (BOM) is used.  The length of this field is determined
+          by subtracting the size of the previous fields from TSize.  If both
+          the File Name and Comment fields are UTF-8, the new General Purpose
+          Bit Flag, bit 11 (Language encoding flag (EFS)), can be used to
+          indicate that both the header File Name and Comment fields are UTF-8
+          and, in this case, the Unicode Path and Unicode Comment extra fields
+          are not needed and should not be created.  Note that, for backward
+          compatibility, bit 11 should only be used if the native character set
+          of the paths and comments being zipped up are already in UTF-8. It is
+          expected that the same file name storage method, either general
+          purpose bit 11 or extra fields, be used in both the Local and Central
+          Directory Header for a file.
+*/
+	uint8 ver;
+	uint32 w32;
+	size_t offset = 0;
+
+	DUMP1("version", ver, u); offset += 1;
+	DUMP4("crc",     w32, x); offset += 4;
+	if (length > offset) {
+		fputs("file name encoded UTF-8:\n", fout);
+		Dump_bytes(fin, fout, length - offset);
+	}
 }
 
 void Dump_extra_field(FILE* fin, FILE* fout, size_t length)
@@ -718,11 +904,11 @@ void Dump_extra_field(FILE* fin, FILE* fout, size_t length)
 		switch (id) {
 		case 0x4453:
 			Print_extra(fout, "Windows NT Security Descriptor Extra Field", id, size);
-			Dump_extra_WindowsNT_security_descriptor(fin, fout, size);
+			Dump_extra_WindowsNT_SD(fin, fout, size);
 			break;
 		case 0x5455:
 			Print_extra(fout, "Extended Timestamp Extra Field", id, size);
-			Dump_extra_timestamp(fin, fout, size);
+			Dump_extra_ExtendedTimestamp(fin, fout, size);
 			break;
 		case 0x6375:
 			Print_extra(fout, "Info-ZIP Unicode Comment Extra Field", id, size);
@@ -796,13 +982,7 @@ void Dump_Local_file(FILE* fin, FILE* fout, int n)
 
 	if (compressed_size) {
 		Print_section(fout, "File data", _ftelli64(fin), n);
-		if (gIsFullDump) {
-			Dump_bytes(fin, fout, compressed_size);
-		}
-		else {
-			_fseeki64(fin, compressed_size, SEEK_CUR);
-			if (!gQuiet) fprintf(fout, "; skip file data(%lu bytes), use -f option to dump the data\n", compressed_size);
-		}
+		Dump_if_fulldump(fin, fout, "file data", compressed_size);
 	}
 
 /*
@@ -1286,6 +1466,9 @@ next_arg:
 		error_abort("please specify input file.\n");
 	}
 
+	//--- 日付表示のためにカレントロカールを設定する.
+	setlocale(LC_TIME, "");
+
 	//--- コマンドライン上の各入力ファイルを処理する.
 	for (int i = 1; i < argc; i++)
 		DumpWildMain(argv[i]);
@@ -1328,7 +1511,7 @@ next_arg:
 	@verbinclude zipdump.example
 
 @section todo 改善予定
-	- extra field の各データ内容をバイトダンプしているが、構造ダンプにする。
+	- none
 
 @section links リンク
 	- http://code.google.com/p/win32cmdx/ - zipdump開発サイト
@@ -1339,7 +1522,9 @@ next_arg:
 	- http://code.google.com/p/win32cmdx/downloads/list
 
 @section changelog 改訂履歴
-	- version-1.1 [Jan 19, 2010] 最新版
+	- version-1.2 [Jan 21, 2010] 最新版
+		- 主要な extra field を構造ダンプする.
+	- version-1.1 [Jan 19, 2010]
 		- 文字列ダンプにて、制御コードを ^@ 形式でエスケープする.
 		- big-endianマシン対応.
 		- Info-ZIPによる "version made by" の解釈を加える.
