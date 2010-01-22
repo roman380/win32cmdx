@@ -326,12 +326,10 @@ void Print_UTC(FILE* fout, uint32 time)
 	Print_note(fout, buf);
 }
 
-void Print_date_and_time(FILE* fout, uint16 mod_time, uint16 mod_date)
+void Print_filetime(FILE* fout, const FILETIME& ft)
 {
 	// use windows API
-	FILETIME ft;
 	SYSTEMTIME st;
-	::DosDateTimeToFileTime(mod_date, mod_time, &ft);
 	::FileTimeToSystemTime(&ft, &st);
 
 	char buf[20*6];
@@ -343,6 +341,23 @@ void Print_date_and_time(FILE* fout, uint16 mod_time, uint16 mod_date)
 		st.wMinute,
 		st.wSecond);
 	Print_note(fout, buf);
+}
+
+void Print_filetime(FILE* fout, const ULARGE_INTEGER& ii)
+{
+	FILETIME ft;
+
+	ft.dwLowDateTime = ii.LowPart;
+	ft.dwHighDateTime = ii.HighPart;
+	Print_filetime(fout, ft);
+
+}
+
+void Print_date_and_time(FILE* fout, uint16 mod_time, uint16 mod_date)
+{
+	FILETIME ft;
+	::DosDateTimeToFileTime(mod_date, mod_time, &ft);
+	Print_filetime(fout, ft);
 }
 
 void Print_version(FILE* fout, uint16 ver)
@@ -684,6 +699,202 @@ bool SkipToNextPK(FILE* fin, FILE* fout)
 //........................................................................
 //!@name ZIP構造ヘッダのダンプ処理.
 //@{
+void Dump_extra_Zip64_Extended_Info(FILE* fin, FILE* fout, size_t length)
+{
+/*
+         -Zip64 Extended Information Extra Field (0x0001):
+
+          The following is the layout of the zip64 extended 
+          information "extra" block. If one of the size or
+          offset fields in the Local or Central directory
+          record is too small to hold the required data,
+          a Zip64 extended information record is created.
+          The order of the fields in the zip64 extended 
+          information record is fixed, but the fields will
+          only appear if the corresponding Local or Central
+          directory record field is set to 0xFFFF or 0xFFFFFFFF.
+
+          Note: all fields stored in Intel low-byte/high-byte order.
+
+          Value      Size       Description
+          -----      ----       -----------
+  (ZIP64) 0x0001     2 bytes    Tag for this "extra" block type
+          Size       2 bytes    Size of this "extra" block
+          Original 
+          Size       8 bytes    Original uncompressed file size
+          Compressed
+          Size       8 bytes    Size of compressed data
+          Relative Header
+          Offset     8 bytes    Offset of local header record
+          Disk Start
+          Number     4 bytes    Number of the disk on which
+                                this file starts 
+
+          This entry in the Local header must include BOTH original
+          and compressed file size fields. If encrypting the 
+          central directory and bit 13 of the general purpose bit
+          flag is set indicating masking, the value stored in the
+          Local Header for the original file size will be zero.
+*/
+	uint32 w32;
+	uint64 w64;
+	size_t offset = 0;
+
+	DUMP8("Original Size",          w64, ux); offset += 8;
+	DUMP8("Compressed Size",        w64, ux); offset += 8;
+	DUMP8("Relative Header Offset", w64, ux); offset += 8;
+	DUMP4("Disk Start Number",      w32,  u); offset += 4;
+
+	if (length > offset) {
+		SkipUnknownData(fin, fout, length - offset);
+	}
+}
+
+void Dump_extra_OS2_Extended_Attributes(FILE* fin, FILE* fout, size_t length)
+{
+/*
+         -OS/2 Extra Field (0x0009):
+
+          The following is the layout of the OS/2 attributes "extra" 
+          block.  (Last Revision  09/05/95)
+
+          Note: all fields stored in Intel low-byte/high-byte order.
+
+          Value       Size          Description
+          -----       ----          -----------
+  (OS/2)  0x0009      2 bytes       Tag for this "extra" block type
+          TSize       2 bytes       Size for the following data block
+          BSize       4 bytes       Uncompressed Block Size
+          CType       2 bytes       Compression type
+          EACRC       4 bytes       CRC value for uncompress block
+          (var)       variable      Compressed block
+
+          The OS/2 extended attribute structure (FEA2LIST) is 
+          compressed and then stored in it's entirety within this 
+          structure.  There will only ever be one "block" of data in 
+          VarFields[].
+
+  [Info-ZIP appnote]
+         -OS/2 Extended Attributes Extra Field (0x0009):
+          =============================================
+
+          The following is the layout of the OS/2 extended attributes "extra"
+          block.  (Last Revision 19960922)
+
+          Note: all fields stored in Intel low-byte/high-byte order.
+
+          Local-header version:
+
+          Value         Size        Description
+          -----         ----        -----------
+  (OS/2)  0x0009        Short       tag for this extra block type
+          TSize         Short       total data size for this block
+          BSize         Long        uncompressed EA data size
+          CType         Short       compression type
+          EACRC         Long        CRC value for uncompressed EA data
+          (var.)        variable    compressed EA data
+
+          Central-header version:
+
+          Value         Size        Description
+          -----         ----        -----------
+  (OS/2)  0x0009        Short       tag for this extra block type
+          TSize         Short       total data size for this block (4)
+          BSize         Long        size of uncompressed local EA data
+
+          The value of CType is interpreted according to the "compression
+          method" section above; i.e., 0 for stored, 8 for deflated, etc.
+
+          The OS/2 extended attribute structure (FEA2LIST) is
+          compressed and then stored in its entirety within this
+          structure.  There will only ever be one "block" of data in
+          the variable-length field.
+
+*/
+	uint16 w16;
+	uint32 w32;
+	size_t offset = 0;
+
+	DUMP4("uncompressed EA data size", w32, ux); offset += 4;
+	if (length <= offset) return;
+	DUMP2("compression type",          w16,  u); offset += 2;
+	DUMP4("CRC",                       w32,  x); offset += 4;
+
+	if (length > offset) {
+		fputs("compressed EA data:\n", fout);
+		Dump_if_fulldump(fin, fout, "compressed EA data", length - offset);
+	}
+}
+
+void Dump_extra_NTFS(FILE* fin, FILE* fout, size_t length)
+{
+/*
+         -NTFS Extra Field (0x000a):
+
+          The following is the layout of the NTFS attributes 
+          "extra" block. (Note: At this time the Mtime, Atime
+          and Ctime values may be used on any WIN32 system.)  
+
+          Note: all fields stored in Intel low-byte/high-byte order.
+
+          Value      Size       Description
+          -----      ----       -----------
+  (NTFS)  0x000a     2 bytes    Tag for this "extra" block type
+          TSize      2 bytes    Size of the total "extra" block
+          Reserved   4 bytes    Reserved for future use
+          Tag1       2 bytes    NTFS attribute tag value #1
+          Size1      2 bytes    Size of attribute #1, in bytes
+          (var.)     Size1      Attribute #1 data
+          .
+          .
+          .
+          TagN       2 bytes    NTFS attribute tag value #N
+          SizeN      2 bytes    Size of attribute #N, in bytes
+          (var.)     SizeN      Attribute #N data
+
+          For NTFS, values for Tag1 through TagN are as follows:
+          (currently only one set of attributes is defined for NTFS)
+
+          Tag        Size       Description
+          -----      ----       -----------
+          0x0001     2 bytes    Tag for attribute #1 
+          Size1      2 bytes    Size of attribute #1, in bytes
+          Mtime      8 bytes    File last modification time
+          Atime      8 bytes    File last access time
+          Ctime      8 bytes    File creation time
+*/
+	uint16 tag, size;
+	uint32 w32;
+	ULARGE_INTEGER ii;
+	size_t extra_offset = 0;
+
+	DUMP4("reserved", w32, x); extra_offset += 4;
+	while (Read16(fin, tag) && Read16(fin, size)) {
+		size_t tag_offset = 0;
+		switch (tag) {
+		case 1:
+			Print_extra(fout, "NTFS file time", tag, size);
+			DUMP8x("last mod time",      ii.QuadPart, x, Print_filetime(fout, ii)); tag_offset += 8;
+			DUMP8x("last access time",   ii.QuadPart, x, Print_filetime(fout, ii)); tag_offset += 8;
+			DUMP8x("last creation time", ii.QuadPart, x, Print_filetime(fout, ii)); tag_offset += 8;
+			break;
+
+		default:
+			Print_extra(fout, "!! Unknown NTFS Extra Field", tag, size);
+			Dump_bytes(fin, fout, size); tag_offset += size;
+			break;
+		}//.endswitch tag
+		if (size > tag_offset) {
+			SkipUnknownData(fin, fout, size - tag_offset);
+		}
+		extra_offset += size;
+	}//.endwhile
+
+	if (length > extra_offset) {
+		SkipUnknownData(fin, fout, length - extra_offset);
+	}
+}
+
 void Dump_extra_WindowsNT_SD(FILE* fin, FILE* fout, size_t length)
 {
 /*
@@ -908,6 +1119,20 @@ void Dump_extra_field(FILE* fin, FILE* fout, size_t length)
 	size_t offset = 0;
 	while (offset < length && Read16(fin, id) && Read16(fin, size)) {
 		switch (id) {
+		case 0x0001:
+			Print_extra(fout, "Zip64 Extended Information Extra Field", id, size);
+			Dump_extra_Zip64_Extended_Info(fin, fout, size);
+			break;
+		case 0x0009:
+			Print_extra(fout, "OS/2 Extended Attributes Extra Field", id, size);
+			Dump_extra_OS2_Extended_Attributes(fin, fout, size);
+			break;
+
+		case 0x000a:
+			Print_extra(fout, "NTFS Extra Field", id, size);
+			Dump_extra_NTFS(fin, fout, size);
+			break;
+
 		case 0x4453:
 			Print_extra(fout, "Windows NT Security Descriptor Extra Field", id, size);
 			Dump_extra_WindowsNT_SD(fin, fout, size);
