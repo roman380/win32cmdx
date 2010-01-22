@@ -71,6 +71,12 @@ const char* gUsage2 =
 	;
 //@}
 
+//........................................................................
+//!@name fuction-proto-type decl.
+//@{
+void Dump_Data_descriptor(FILE* fin, FILE* fout);
+//@}
+
 //------------------------------------------------------------------------
 // 汎用関数群
 //........................................................................
@@ -985,8 +991,25 @@ void Dump_Local_file(FILE* fin, FILE* fout, int n)
 		Dump_if_fulldump(fin, fout, "file data", compressed_size);
 	}
 
+	if (flags & 0x0008) { // Bit 3: on
+		Print_section(fout, "Data descriptor", _ftelli64(fin), n);
+		Dump_Data_descriptor(fin, fout);
+	}
+}
+
+void Dump_Data_descriptor(FILE* fin, FILE* fout)
+{
 /*
   C.  Data descriptor:
+
+      [Info-ZIP discrepancy:
+       The Info-ZIP zip program starts the data descriptor with a 4-byte
+       PK-style signature.  Despite the specification, none of the PKWARE
+       programs supports the data descriptor.  PKZIP 4.0 -fix function
+       (and PKZIPFIX 2.04) ignores the data descriptor info even when bit 3
+       of the general purpose bit flag is set.
+        data descriptor signature       4 bytes  (0x08074b50)
+      ]
 
         crc-32                          4 bytes
         compressed size                 4 bytes
@@ -1008,12 +1031,10 @@ void Dump_Local_file(FILE* fin, FILE* fout, int n)
       the file the compressed and uncompressed sizes will be 8
       byte values.  
 */
-	if (flags & 0x0008) { // Bit 3: on
-		Print_section(fout, "Data descriptor", _ftelli64(fin), n);
-		DUMP4("crc-32",                     w32,                x);  // ZIP64では、0xFFFFFFFFに固定する.
-		DUMP4("compressed size",            compressed_size,    ux); // ZIP64では、0xFFFFFFFFに固定する.
-		DUMP4("uncompressed size",          w32,                ux); // ZIP64では、0xFFFFFFFFに固定する.
-	}
+	uint32 w32;
+	DUMP4("crc-32",             w32, x);  // ZIP64では、0xFFFFFFFFに固定する.
+	DUMP4("compressed size",    w32, ux); // ZIP64では、0xFFFFFFFFに固定する.
+	DUMP4("uncompressed size",  w32, ux); // ZIP64では、0xFFFFFFFFに固定する.
 }
 
 void Dump_Archive_extra_data_record(FILE* fin, FILE* fout)
@@ -1303,6 +1324,12 @@ void ZipDumpFile(FILE* fin, FILE* fout)
 			Print_header(fout, "Local file header", signature, offset, ++file_count);
 			Dump_Local_file(fin, fout, file_count);
 			break;
+
+		case 0x08074b50:
+			Print_header(fout, "Data descriptor header", signature, offset, file_count);
+			Dump_Data_descriptor(fin, fout);
+			break;
+
 		case 0x08064b50:
 			Print_header(fout, "Archive extra data record", signature, offset);
 			Dump_Archive_extra_data_record(fin, fout);
