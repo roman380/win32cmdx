@@ -64,7 +64,7 @@ const char* gUsage2 =
 	"  -f         full dump\n"
 	"  -q         quiet mode\n"
 	"  -o         omit same hexdump line\n"
-	"  -s         output to stdout instend of files(*.zipdump.txt)\n"
+	"  -s         output to stdout instend of files(*.zipdump)\n"
 	"  -r         recursive search under the input-file's folder(wildcard needed)\n"
 	"  -d<DIR>    output to DIR\n"
 	"  fileN.cpp  input-files. wildcard OK\n"
@@ -1336,7 +1336,7 @@ void ZipDumpFile(FILE* fin, FILE* fout)
 
 //........................................................................
 // ZIPファイルダンプのメイン関数.
-/** fnameを読み込み、コメントと余分な空白を除去し、fname+".zipdump.txt"に出力する. */
+/** fnameを読み込み、コメントと余分な空白を除去し、fname+".zipdump"に出力する. */
 void DumpMain(const char* fname)
 {
 	FILE* fin = OpenInput(fname);
@@ -1346,7 +1346,7 @@ void DumpMain(const char* fname)
 		printf("<<< %s >>> begin.\n", fname);
 	}
 	else {
-		fout = OpenOutput(fname, ".zipdump.txt");
+		fout = OpenOutput(fname, ".zipdump");
 	}
 	fprintf(fout, "*** zipdump of \"%s\" ***\n", fname);
 
@@ -1494,7 +1494,7 @@ next_arg:
 
 @section func 特徴
 	- PKZIP APPNOTE.TXT Version 6.3.2[September 28, 2007] のファイルフォーマット仕様に基づき、構造単位でのダンプを行います。
-	- 対象ZIPファイル名に ".zipdump.txt" を付加した名前のテキストファイルを生成し、ダンプ結果を出力します。
+	- 対象ZIPファイル名に ".zipdump" を付加した名前のテキストファイルを生成し、ダンプ結果を出力します。
 
 @section env 動作環境
 	Windows2000以降を動作対象としています。
@@ -1522,8 +1522,9 @@ next_arg:
 	- http://code.google.com/p/win32cmdx/downloads/list
 
 @section changelog 改訂履歴
-	- version-1.2 [Jan 21, 2010] 最新版
+	- version-1.2 [Jan 23, 2010] 最新版
 		- 主要な extra field を構造ダンプする.
+		- 出力ファイルの拡張子を ".zipdump.txt" から ".zipdump" に変更した.
 	- version-1.1 [Jan 19, 2010]
 		- 文字列ダンプにて、制御コードを ^@ 形式でエスケープする.
 		- big-endianマシン対応.
