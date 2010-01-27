@@ -266,6 +266,16 @@ void Print_note(FILE* fout, const char* note)
 {
 	fprintf(fout, "%32s * %s\n", "", note);
 }
+
+void Printf_note(FILE* fout, const char* fmt, ...)
+{
+	fprintf(fout, "%32s * ", "");
+	va_list ap;
+	va_start(ap, fmt);
+	vfprintf(fout, fmt, ap);
+	va_end(ap);
+	fputc('\n', fout);
+}
 //@}
 
 //........................................................................
@@ -358,13 +368,6 @@ void Print_date_and_time(FILE* fout, uint16 mod_time, uint16 mod_date)
 	FILETIME ft;
 	::DosDateTimeToFileTime(mod_date, mod_time, &ft);
 	Print_filetime(fout, ft);
-}
-
-void Print_version(FILE* fout, uint16 ver)
-{
-	char buf[20*2];
-	sprintf_s(buf, sizeof(buf), "ver %u.%u", ver/10, ver%10);
-	Print_note(fout, buf);
 }
 
 void Print_internal_file_attributes(FILE* fout, uint16 attr)
@@ -531,7 +534,7 @@ void Print_general_purpose_bit_flag(FILE* fout, uint16 flags, uint16 method)
 }
 
 
-void Print_verion_made_by(FILE* fout, uint16 ver)
+void Print_version(FILE* fout, uint16 ver)
 {
 /*
       version made by (2 bytes)
@@ -563,8 +566,43 @@ void Print_verion_made_by(FILE* fout, uint16 ver)
           used to encode the file.  The value/10 indicates the major 
           version number, and the value mod 10 is the minor version 
           number.  
+
+      version needed to extract (2 bytes)
+
+          The minimum supported ZIP specification version needed to 
+          extract the file, mapped as above.  This value is based on 
+          the specific format features a ZIP program must support to 
+          be able to extract the file.  If multiple features are
+          applied to a file, the minimum version should be set to the 
+          feature having the highest value. New features or feature 
+          changes affecting the published format specification will be 
+          implemented using higher version numbers than the last 
+          published value to avoid conflict.
+
+          Current minimum feature versions are as defined below:
+
+          1.0 - Default value
+          1.1 - File is a volume label
+          2.0 - File is a folder (directory)
+          2.0 - File is compressed using Deflate compression
+          2.0 - File is encrypted using traditional PKWARE encryption
+          2.1 - File is compressed using Deflate64(tm)
+          2.5 - File is compressed using PKWARE DCL Implode
+          2.7 - File is a patch data set
+          4.5 - File uses ZIP64 format extensions
+          4.6 - File is compressed using BZIP2 compression*
+          5.0 - File is encrypted using DES
+          5.0 - File is encrypted using 3DES
+          5.0 - File is encrypted using original RC2 encryption
+          5.0 - File is encrypted using RC4 encryption
+          5.1 - File is encrypted using AES encryption
+          5.1 - File is encrypted using corrected RC2 encryption**
+          5.2 - File is encrypted using corrected RC2-64 encryption**
+          6.1 - File is encrypted using non-OAEP key wrapping***
+          6.2 - Central directory encryption
 */
-	int os_type = (ver >> 8) & 0xff;
+	unsigned os_type = (ver >> 8) & 0xff;
+	unsigned zip_ver = ver & 0xff;
 
 	switch (os_type) {
 	case 0:  Print_note(fout, "0 - MS-DOS and OS/2 (FAT / VFAT / FAT32 file systems)"); break;
@@ -577,7 +615,7 @@ void Print_verion_made_by(FILE* fout, uint16 ver)
 	case 7:  Print_note(fout, "7 - Macintosh"); break;
 	case 8:  Print_note(fout, "8 - Z-System"); break;
 	case 9:  Print_note(fout, "9 - CP/M"); break;
-	case 10: Print_note(fout, "10 - Windows NTFS"); break;
+	case 10: Print_note(fout, "10 - Windows NTFS or TOPS-20(by Info-ZIP)"); break;
 	case 11: Print_note(fout, "11 - MVS (OS/390 - Z/OS) or NTFS(by Info-ZIP)"); break;
 	case 12: Print_note(fout, "12 - VSE or SMS/QDOS(by Info-ZIP)"); break;
 	case 13: Print_note(fout, "13 - Acorn Risc"); break;
@@ -587,10 +625,11 @@ void Print_verion_made_by(FILE* fout, uint16 ver)
 	case 17: Print_note(fout, "17 - Tandem"); break;
 	case 18: Print_note(fout, "18 - OS/400"); break;
 	case 19: Print_note(fout, "19 - OS/X (Darwin)"); break;
-	default: Print_note(fout, "20~255 - unused"); break;
+	case 30: Print_note(fout, "30 - AtheOS/Syllable(by Info-ZIP)"); break;
+	default: Printf_note(fout, "%u - unused", os_type); break;
 	}//.endswitch
 
-	Print_version(fout, ver & 0xff);
+	Printf_note(fout, "ver %u.%u", zip_ver / 10, zip_ver % 10);
 }
 //@}
 
@@ -1331,7 +1370,7 @@ void Dump_Central_directory_file_header(FILE* fin, FILE* fout, int n)
 	uint16 w16, flags=0, method=0, mod_time=0, mod_date=0, file_name_length=0, extra_field_length=0, file_comment_length=0;
 	uint32 w32, compressed_size=0;
 
-	DUMP2x("version made by",           w16,                 x, Print_verion_made_by(fout, w16));
+	DUMP2x("version made by",           w16,                 x, Print_version(fout, w16));
 	DUMP2x("version needed to extract", w16,                 u, Print_version(fout, w16));
 	DUMP2 ("general purpose bit flag",  flags,               x);
 	DUMP2x("compression method",        method,              x, Print_general_purpose_bit_flag(fout, flags, method));
@@ -1459,7 +1498,7 @@ void Dump_Zip64_end_of_central_directory_record(FILE* fin, FILE* fout)
 	uint64 size = 0;
 
 	DUMP8 ("size of zip64 end of central directory record",                 size, ux);
-	DUMP2x("version made by",                                               w16,  x, Print_verion_made_by(fout, w16));
+	DUMP2x("version made by",                                               w16,  x, Print_version(fout, w16));
 	DUMP2x("version needed to extract",                                     w16,  u, Print_version(fout, w16));
 	DUMP4 ("number of this disk",                                           w32,  u);
 	DUMP4 ("number of the disk with the start of the central directory",    w32,  u);
