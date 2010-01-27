@@ -11,7 +11,7 @@
 <div class="contents">
 
 
-<h1><a class="anchor" id="zipdump-manual">zipdump.exe - dump zip file structure </a></h1><dl class="version"><dt><b>Version:</b></dt><dd>1.1 (r33)</dd></dl>
+<h1><a class="anchor" id="zipdump-manual">zipdump.exe - dump zip file structure </a></h1><dl class="version"><dt><b>Version:</b></dt><dd>1.2 (r43)</dd></dl>
 <dl class="author"><dt><b>Author:</b></dt><dd>Hiroshi Kuno &lt;<a href="http://code.google.com/p/win32cmdx/">http://code.google.com/p/win32cmdx/</a>&gt;</dd></dl>
 <dl class="user"><dt><b>License:</b></dt><dd>New BSD License <br/>
 Copyright &copy; 2010 by Hiroshi Kuno <br/>
@@ -24,7 +24,7 @@ Copyright &copy; 2010 by Hiroshi Kuno <br/>
 特徴</a></h2>
 <ul>
 <li>PKZIP APPNOTE.TXT Version 6.3.2[September 28, 2007] のファイルフォーマット仕様に基づき、構造単位でのダンプを行います。</li>
-<li>対象ZIPファイル名に ".zipdump.txt" を付加した名前のテキストファイルを生成し、ダンプ結果を出力します。</li>
+<li>対象ZIPファイル名に ".zipdump" を付加した名前のテキストファイルを生成し、ダンプ結果を出力します。</li>
 </ul>
 <h2><a class="anchor" id="env">
 動作環境</a></h2>
@@ -35,15 +35,15 @@ Copyright &copy; 2010 by Hiroshi Kuno <br/>
 <h2><a class="anchor" id="usage">
 使い方</a></h2>
 <div class="fragment"><pre class="fragment">usage :zipdump [-h?fqosr] [-d&lt;DIR&gt;] file1.zip file2.zip ...
-  version 1.1 (r33)
+  version 1.2 (r43)
   -h -?      this help
   -f         full dump
   -q         quiet mode
   -o         omit same hexdump line
-  -s         output to stdout instend of files(*.zipdump.txt)
+  -s         output to stdout instend of files(*.zipdump)
   -r         recursive search under the input-file's folder(wildcard needed)
   -d&lt;DIR&gt;    output to DIR
-  fileN.cpp  input-files. wildcard OK
+  fileN.zip  input-files. wildcard OK
 </pre></div><h2><a class="anchor" id="example">
 出力例</a></h2>
 <div class="fragment"><pre class="fragment">zipdump -s test.zip 
@@ -52,7 +52,8 @@ Copyright &copy; 2010 by Hiroshi Kuno <br/>
 
 [Local file header #1] offset : 0(0x0000000000000000)
                 header signature : 0x04034B50
-       version needed to extract : 20
+       version needed to extract : 0x0014
+                                 * 0 - MS-DOS and OS/2 (FAT / VFAT / FAT32 file systems)
                                  * ver 2.0
         general purpose bit flag : 0x0000
               compression method : 0x0008
@@ -69,23 +70,35 @@ Copyright &copy; 2010 by Hiroshi Kuno <br/>
 version-filt.pl
 
 [Local extra field #1] offset : 45(0x000000000000002D)
-ID : 0x4453, size : 101(0x0065)
-+00000000 : BC 00 00 00 00 08 00 FE-E7 B7 29 63 64 60 69 10 :..........)cd`i.
-+00000010 : 61 60 60 30 60 80 00 1F-20 66 64 05 33 59 45 81 :a``0`... fd.3YE.
-+00000020 : 44 94 10 DB 91 8D 1C FF-99 8F 5A 14 E5 BE 63 C6 :D.........Z...c.
-+00000030 : 2D C7 C8 C4 C0 C0 C4 50-C0 C0 02 96 96 60 F8 CF :-......P.....`..
-+00000040 : 28 CF 00 12 03 A9 55 00-12 0A 60 B6 08 44 9C 11 :(.....U...`..D..
-+00000050 : 22 2E 04 A6 54 20 62 78-EC 04 99 B7 92 41 08 C5 :"...T bx.....A..
-+00000060 : 3C 45 20 1B 00                                  :&lt;E ..           
-ID : 0x5455, size : 13(0x000D)
-+00000000 : 07 64 0A C7 4A 81 C7 55-4B A8 E7 D9 4A          :.d..J..UK...J   
+
+[-Windows NT Security Descriptor Extra Field]
+                       extra tag : 0x4453
+                      extra size : 101(0x0065)
+       uncompressed SD data size : 188(0x000000BC)
+                         version : 0
+                compression type : 8
+                             crc : 0x29B7E7FE
+compressed SD data:
+; skip compressed SD data(90 bytes), use -f option to dump the data
+
+[-Extended Timestamp Extra Field]
+                       extra tag : 0x5455
+                      extra size : 13(0x000D)
+                           Flags : 0x07
+                   last mod time : 0x4AC70A64
+                                 * 2009-10-03T08:25:08 UTC (2009/10/03 17:25:08 東京 (標準時))
+                last access time : 0x4B605800
+                                 * 2010-01-27T15:13:04 UTC (2010/01/28 0:13:04 東京 (標準時))
+                last create time : 0x4AD9E7A8
+                                 * 2009-10-17T15:50:00 UTC (2009/10/18 0:50:00 東京 (標準時))
 
 [File data #1] offset : 167(0x00000000000000A7)
 ; skip file data(126 bytes), use -f option to dump the data
 
 [Local file header #2] offset : 293(0x0000000000000125)
                 header signature : 0x04034B50
-       version needed to extract : 20
+       version needed to extract : 0x0014
+                                 * 0 - MS-DOS and OS/2 (FAT / VFAT / FAT32 file systems)
                                  * ver 2.0
         general purpose bit flag : 0x0000
               compression method : 0x0008
@@ -102,16 +115,27 @@ ID : 0x5455, size : 13(0x000D)
 version-up.pl
 
 [Local extra field #2] offset : 336(0x0000000000000150)
-ID : 0x4453, size : 101(0x0065)
-+00000000 : BC 00 00 00 00 08 00 FE-E7 B7 29 63 64 60 69 10 :..........)cd`i.
-+00000010 : 61 60 60 30 60 80 00 1F-20 66 64 05 33 59 45 81 :a``0`... fd.3YE.
-+00000020 : 44 94 10 DB 91 8D 1C FF-99 8F 5A 14 E5 BE 63 C6 :D.........Z...c.
-+00000030 : 2D C7 C8 C4 C0 C0 C4 50-C0 C0 02 96 96 60 F8 CF :-......P.....`..
-+00000040 : 28 CF 00 12 03 A9 55 00-12 0A 60 B6 08 44 9C 11 :(.....U...`..D..
-+00000050 : 22 2E 04 A6 54 20 62 78-EC 04 99 B7 92 41 08 C5 :"...T bx.....A..
-+00000060 : 3C 45 20 1B 00                                  :&lt;E ..           
-ID : 0x5455, size : 13(0x000D)
-+00000000 : 07 A8 5F C7 4A 11 CA 55-4B A8 E7 D9 4A          :.._.J..UK...J   
+
+[-Windows NT Security Descriptor Extra Field]
+                       extra tag : 0x4453
+                      extra size : 101(0x0065)
+       uncompressed SD data size : 188(0x000000BC)
+                         version : 0
+                compression type : 8
+                             crc : 0x29B7E7FE
+compressed SD data:
+; skip compressed SD data(90 bytes), use -f option to dump the data
+
+[-Extended Timestamp Extra Field]
+                       extra tag : 0x5455
+                      extra size : 13(0x000D)
+                           Flags : 0x07
+                   last mod time : 0x4AC75FA8
+                                 * 2009-10-03T14:28:56 UTC (2009/10/03 23:28:56 東京 (標準時))
+                last access time : 0x4B605800
+                                 * 2010-01-27T15:13:04 UTC (2010/01/28 0:13:04 東京 (標準時))
+                last create time : 0x4AD9E7A8
+                                 * 2009-10-17T15:50:00 UTC (2009/10/18 0:50:00 東京 (標準時))
 
 [File data #2] offset : 458(0x00000000000001CA)
 ; skip file data(414 bytes), use -f option to dump the data
@@ -121,7 +145,8 @@ ID : 0x5455, size : 13(0x000D)
                  version made by : 0x0B17
                                  * 11 - MVS (OS/390 - Z/OS) or NTFS(by Info-ZIP)
                                  * ver 2.3
-       version needed to extract : 20
+       version needed to extract : 0x0014
+                                 * 0 - MS-DOS and OS/2 (FAT / VFAT / FAT32 file systems)
                                  * ver 2.0
         general purpose bit flag : 0x0000
               compression method : 0x0008
@@ -144,17 +169,26 @@ ID : 0x5455, size : 13(0x000D)
 version-filt.pl
 
 [extra field #1] offset : 933(0x00000000000003A5)
-ID : 0x4453, size : 4(0x0004)
-+00000000 : BC 00 00 00                                     :....            
-ID : 0x5455, size : 5(0x0005)
-+00000000 : 07 64 0A C7 4A                                  :.d..J           
+
+[-Windows NT Security Descriptor Extra Field]
+                       extra tag : 0x4453
+                      extra size : 4(0x0004)
+       uncompressed SD data size : 188(0x000000BC)
+
+[-Extended Timestamp Extra Field]
+                       extra tag : 0x5455
+                      extra size : 5(0x0005)
+                           Flags : 0x07
+                   last mod time : 0x4AC70A64
+                                 * 2009-10-03T08:25:08 UTC (2009/10/03 17:25:08 東京 (標準時))
 
 [Central file header #2] offset : 950(0x00000000000003B6)
                 header signature : 0x02014B50
                  version made by : 0x0B17
                                  * 11 - MVS (OS/390 - Z/OS) or NTFS(by Info-ZIP)
                                  * ver 2.3
-       version needed to extract : 20
+       version needed to extract : 0x0014
+                                 * 0 - MS-DOS and OS/2 (FAT / VFAT / FAT32 file systems)
                                  * ver 2.0
         general purpose bit flag : 0x0000
               compression method : 0x0008
@@ -177,26 +211,34 @@ ID : 0x5455, size : 5(0x0005)
 version-up.pl
 
 [extra field #2] offset : 1009(0x00000000000003F1)
-ID : 0x4453, size : 4(0x0004)
-+00000000 : BC 00 00 00                                     :....            
-ID : 0x5455, size : 5(0x0005)
-+00000000 : 07 A8 5F C7 4A                                  :.._.J           
+
+[-Windows NT Security Descriptor Extra Field]
+                       extra tag : 0x4453
+                      extra size : 4(0x0004)
+       uncompressed SD data size : 188(0x000000BC)
+
+[-Extended Timestamp Extra Field]
+                       extra tag : 0x5455
+                      extra size : 5(0x0005)
+                           Flags : 0x07
+                   last mod time : 0x4AC75FA8
+                                 * 2009-10-03T14:28:56 UTC (2009/10/03 23:28:56 東京 (標準時))
 
 [End of central directory record] offset : 1026(0x0000000000000402)
                 header signature : 0x06054B50
              number of this disk : 0
-number of the disk with the start of the central directory : 0
-total number of entries in the central directory on this disk : 2
-total number of entries in the central directory : 2
-   size of the central directory : 154(0x0000009A)
-offset of start of central directory with respect to the starting disk number : 872(0x00000368)
+      disk of starting directory : 0
+  directory-entries on this disk : 2
+  directory-entries in all disks : 2
+           size of the directory : 154(0x0000009A)
+    offset of starting directory : 872(0x00000368)
         .ZIP file comment length : 0(0x0000)
 &lt;&lt;&lt; test.zip &gt;&gt;&gt; end.
 
 </pre></div><h2><a class="anchor" id="todo">
 改善予定</a></h2>
 <ul>
-<li>extra field の各データ内容をバイトダンプしているが、構造ダンプにする。</li>
+<li>"zip64 extensible data sector" の構造ダンプを行う.</li>
 </ul>
 <h2><a class="anchor" id="links">
 リンク</a></h2>
@@ -213,7 +255,13 @@ offset of start of central directory with respect to the starting disk number : 
 <h2><a class="anchor" id="changelog">
 改訂履歴</a></h2>
 <ul>
-<li>version-1.1 [Jan 19, 2010] 最新版<ul>
+<li>version-1.2 [Jan 28, 2010] 最新版<ul>
+<li>主要な extra field を構造ダンプする.</li>
+<li>出力ファイルの拡張子を ".zipdump.txt" から ".zipdump" に変更した.</li>
+<li>フィールド説明文が32文字を越える箇所は短い文章に改めて、出力レイアウトが崩れないようにした.</li>
+</ul>
+</li>
+<li>version-1.1 [Jan 19, 2010]<ul>
 <li>文字列ダンプにて、制御コードを ^@ 形式でエスケープする.</li>
 <li>big-endianマシン対応.</li>
 <li>Info-ZIPによる "version made by" の解釈を加える.</li>
@@ -225,7 +273,7 @@ offset of start of central directory with respect to the starting disk number : 
 <li>version-1.0 [Jan 17, 2010] 公開初版 </li>
 </ul>
 </div>
-<hr size="1"/><address style="text-align: right;"><small>Generated on Wed Jan 20 00:07:59 2010 for win32cmdx by&nbsp;
+<hr size="1"/><address style="text-align: right;"><small>Generated on Thu Jan 28 00:15:20 2010 for win32cmdx by&nbsp;
 <a href="http://www.doxygen.org/index.html">
 doxygen</a> 1.6.1 </small></address>
 </body>
