@@ -72,10 +72,8 @@ const char* gUsage2 =
 //@}
 
 //........................................................................
-//!@name fuction-proto-type decl.
-//@{
+// fuction-proto-type decl.
 void Dump_Data_descriptor(FILE* fin, FILE* fout);
-//@}
 
 //------------------------------------------------------------------------
 // 汎用関数群
@@ -139,7 +137,7 @@ FILE* OpenInput(const char* fname)
  */
 FILE* OpenOutput(const char* inputfname, const char* extname)
 {
-	char fname[MY_MAX_PATH+100];	// 拡張子には100文字もみておけば十分
+	char fname[MY_MAX_PATH+100];	// 拡張子には100文字もみておけば十分.
 	if (gOutDir) {
 		char base[MY_MAX_PATH];
 		char ext[MY_MAX_PATH];
@@ -200,9 +198,17 @@ bool Read64(FILE* fin, uint64& val)
 //@}
 
 //........................................................................
-//!@name print a field.
-//@{
-/** print %u */
+/** @name print a field.
+ * 指定の形式でフィールドを表示する.
+ * - Print_u: print for decimal
+ * - Print_x: print for hexadecimal
+ * - Print_ux: print for decimal and hexadecimal
+ * - Print_uFF: print for decimal or "0xFFFF"
+ * - Print_note: print string
+ * - Printf_note: print format string
+ * @{
+ */
+//........................................................................
 void Print_u(FILE* fout, const char* prompt, uint8 a)
 {
 	fprintf(fout, "%32s : %u\n", prompt, a);
@@ -223,7 +229,7 @@ void Print_u(FILE* fout, const char* prompt, uint64 a)
 	fprintf(fout, "%32s : %I64u\n", prompt, a);
 }
 
-/** print %X */
+//........................................................................
 void Print_x(FILE* fout, const char* prompt, uint8 a)
 {
 	fprintf(fout, "%32s : 0x%02X\n", prompt, a);
@@ -244,7 +250,7 @@ void Print_x(FILE* fout, const char* prompt, uint64 a)
 	fprintf(fout, "%32s : 0x%016I64X\n", prompt, a);
 }
 
-/** print %d(%X) */
+//........................................................................
 void Print_ux(FILE* fout, const char* prompt, uint8 a)
 {
 	fprintf(fout, "%32s : %u(0x%02X)\n", prompt, a, a);
@@ -265,7 +271,7 @@ void Print_ux(FILE* fout, const char* prompt, uint64 a)
 	fprintf(fout, "%32s : %u(0x%016I64X)\n", prompt, a, a);
 }
 
-/** print %d or 0xFFFF */
+//........................................................................
 void Print_uFF(FILE* fout, const char* prompt, uint16 a)
 {
 	if (a != 0xffffU)
@@ -282,13 +288,12 @@ void Print_uFF(FILE* fout, const char* prompt, uint32 a)
 		Print_x(fout, prompt, a);
 }
 
-/** print %s */
+//........................................................................
 void Print_note(FILE* fout, const char* note)
 {
 	fprintf(fout, "%32s * %s\n", "", note);
 }
 
-/** print format ... */
 void Printf_note(FILE* fout, const char* fmt, ...)
 {
 	fprintf(fout, "%32s * ", "");
@@ -801,10 +806,11 @@ void Dump_extra_Zip64_Extended_Info(FILE* fin, FILE* fout, size_t length)
 	uint64 w64;
 	size_t offset = 0;
 
-	DUMP8("Original Size",          w64, ux); offset += 8;
-	DUMP8("Compressed Size",        w64, ux); offset += 8;
-	DUMP8("Relative Header Offset", w64, ux); offset += 8;
-	DUMP4("Disk Start Number",      w32,  u); offset += 4;
+	//    "12345678901234567890123456789012",
+	DUMP8("Original Size",                   w64, ux); offset += 8;
+	DUMP8("Compressed Size",                 w64, ux); offset += 8;
+	DUMP8("Relative Header Offset",          w64, ux); offset += 8;
+	DUMP4("Disk Start Number",               w32,  u); offset += 4;
 
 	if (length > offset) {
 		SkipUnknownData(fin, fout, length - offset);
@@ -876,10 +882,11 @@ void Dump_extra_OS2_Extended_Attributes(FILE* fin, FILE* fout, size_t length)
 	uint32 w32;
 	size_t offset = 0;
 
-	DUMP4("uncompressed EA data size", w32, ux); offset += 4;
+	//    "12345678901234567890123456789012",
+	DUMP4("uncompressed EA data size",       w32, ux); offset += 4;
 	if (length <= offset) return;
-	DUMP2("compression type",          w16,  u); offset += 2;
-	DUMP4("CRC",                       w32,  x); offset += 4;
+	DUMP2("compression type",                w16,  u); offset += 2;
+	DUMP4("CRC",                             w32,  x); offset += 4;
 
 	if (length > offset) {
 		fputs("compressed EA data:\n", fout);
@@ -935,6 +942,7 @@ void Dump_extra_NTFS(FILE* fin, FILE* fout, size_t length)
 		switch (tag) {
 		case 1:
 			Print_extra(fout, "NTFS file time", tag, size);
+			//     "12345678901234567890123456789012",
 			DUMP8x("last mod time",      ii.QuadPart, x, Print_filetime(fout, ii)); tag_offset += 8;
 			DUMP8x("last access time",   ii.QuadPart, x, Print_filetime(fout, ii)); tag_offset += 8;
 			DUMP8x("last creation time", ii.QuadPart, x, Print_filetime(fout, ii)); tag_offset += 8;
@@ -990,12 +998,13 @@ void Dump_extra_WindowsNT_SD(FILE* fin, FILE* fout, size_t length)
 	uint16 w16;
 	size_t offset = 0;
 
-	DUMP4("uncompressed SD data size", w32, ux); offset += 4;
+	//    "12345678901234567890123456789012",
+	DUMP4("uncompressed SD data size",       w32, ux); offset += 4;
 	if (length <= offset) return;
 
-	DUMP1("version",                   ver, u); offset += 1;
-	DUMP2("compression type",          w16, u); offset += 2;
-	DUMP4("crc",                       w32, x); offset += 4;
+	DUMP1("version",                         ver,  u); offset += 1;
+	DUMP2("compression type",                w16,  u); offset += 2;
+	DUMP4("crc",                             w32,  x); offset += 4;
 
 	if (length > offset) {
 		fputs("compressed SD data:\n", fout);
@@ -1242,16 +1251,17 @@ void Dump_Local_file(FILE* fin, FILE* fout, int n)
 	uint16 w16, flags=0, method=0, mod_time=0, mod_date=0, file_name_length=0, extra_field_length=0;
 	uint32 w32, compressed_size=0;
 
-	DUMP2x("version needed to extract",  w16,                u, Print_version(fout, w16));
-	DUMP2 ("general purpose bit flag",   flags,              x);
-	DUMP2x("compression method",         method,             x, Print_general_purpose_bit_flag(fout, flags, method));
-	DUMP2 ("last mod file time",         mod_time,           x);
-	DUMP2x("last mod file date",         mod_date,           x, Print_date_and_time(fout, mod_time, mod_date));
-	DUMP4 ("crc-32",                     w32,                x);  // ZIP64では、0xFFFFFFFFに固定する.
-	DUMP4 ("compressed size",            compressed_size,    ux); // ZIP64では、0xFFFFFFFFに固定する.
-	DUMP4 ("uncompressed size",          w32,                ux); // ZIP64では、0xFFFFFFFFに固定する.
-	DUMP2 ("file name length",           file_name_length,   ux); // 65,535以上は不可.
-	DUMP2 ("extra field length",         extra_field_length, ux); // 65,535以上は不可.
+	//     "12345678901234567890123456789012",
+	DUMP2x("version needed to extract",       w16,                 u, Print_version(fout, w16));
+	DUMP2 ("general purpose bit flag",        flags,               x);
+	DUMP2x("compression method",              method,              x, Print_general_purpose_bit_flag(fout, flags, method));
+	DUMP2 ("last mod file time",              mod_time,            x);
+	DUMP2x("last mod file date",              mod_date,            x, Print_date_and_time(fout, mod_time, mod_date));
+	DUMP4 ("crc-32",                          w32,                 x); // ZIP64では、0xFFFFFFFFに固定する.
+	DUMP4 ("compressed size",                 compressed_size,    ux); // ZIP64では、0xFFFFFFFFに固定する.
+	DUMP4 ("uncompressed size",               w32,                ux); // ZIP64では、0xFFFFFFFFに固定する.
+	DUMP2 ("file name length",                file_name_length,   ux); // 65,535以上は不可.
+	DUMP2 ("extra field length",              extra_field_length, ux); // 65,535以上は不可.
 	if (file_name_length) {
 		Print_section(fout, "Local file name", _ftelli64(fin), n);
 		Dump_string(fin, fout, file_name_length);
@@ -1318,9 +1328,10 @@ void Dump_Data_descriptor(FILE* fin, FILE* fout)
       byte values.  
 */
 	uint32 w32;
-	DUMP4("crc-32",             w32, x);  // ZIP64では、0xFFFFFFFFに固定する.
-	DUMP4("compressed size",    w32, ux); // ZIP64では、0xFFFFFFFFに固定する.
-	DUMP4("uncompressed size",  w32, ux); // ZIP64では、0xFFFFFFFFに固定する.
+	//    "12345678901234567890123456789012",
+	DUMP4("crc-32",                          w32,  x); // ZIP64では、0xFFFFFFFFに固定する.
+	DUMP4("compressed size",                 w32, ux); // ZIP64では、0xFFFFFFFFに固定する.
+	DUMP4("uncompressed size",               w32, ux); // ZIP64では、0xFFFFFFFFに固定する.
 }
 
 void Dump_Archive_extra_data_record(FILE* fin, FILE* fout)
@@ -1392,23 +1403,23 @@ void Dump_Central_directory_file_header(FILE* fin, FILE* fout, int n)
 	uint16 w16, flags=0, method=0, mod_time=0, mod_date=0, file_name_length=0, extra_field_length=0, file_comment_length=0;
 	uint32 w32, compressed_size=0;
 
-	DUMP2x("version made by",           w16,                 x, Print_version(fout, w16));
-	DUMP2x("version needed to extract", w16,                 u, Print_version(fout, w16));
-	DUMP2 ("general purpose bit flag",  flags,               x);
-	DUMP2x("compression method",        method,              x, Print_general_purpose_bit_flag(fout, flags, method));
-	DUMP2 ("last mod file time",        mod_time,            x);
-	DUMP2x("last mod file date",        mod_date,            x, Print_date_and_time(fout, mod_time, mod_date));
-	DUMP4 ("crc-32",                    w32,                 x); // ZIP64では、0xFFFFFFFFに固定する.
-	DUMP4 ("compressed size",           compressed_size,     ux); // ZIP64では、0xFFFFFFFFに固定する.
-	DUMP4 ("uncompressed size",         w32,                 ux); // ZIP64では、0xFFFFFFFFに固定する.
-	DUMP2 ("file name length",          file_name_length,    ux); // 65,535以上は不可.
-	DUMP2 ("extra field length",        extra_field_length,  ux); // 65,535以上は不可.
-	DUMP2 ("file comment length",       file_comment_length, ux); // 65,535以上は不可.
-
-	DUMP2 ("disk number start",               w16,           uFF); // ZIP64では、0xFFFFに固定する.
-	DUMP2x("internal file attributes",        w16,           x, Print_internal_file_attributes(fout, w16));
-	DUMP4x("external file attributes",        w32,           x, Print_external_file_attributes(fout, w32));
-	DUMP4 ("relative offset of local header", w32,           ux);
+	//     "12345678901234567890123456789012",
+	DUMP2x("version made by",                 w16,                  x, Print_version(fout, w16));
+	DUMP2x("version needed to extract",       w16,                  u, Print_version(fout, w16));
+	DUMP2 ("general purpose bit flag",        flags,                x);
+	DUMP2x("compression method",              method,               x, Print_general_purpose_bit_flag(fout, flags, method));
+	DUMP2 ("last mod file time",              mod_time,             x);
+	DUMP2x("last mod file date",              mod_date,             x, Print_date_and_time(fout, mod_time, mod_date));
+	DUMP4 ("crc-32",                          w32,                  x); // ZIP64では、0xFFFFFFFFに固定する.
+	DUMP4 ("compressed size",                 compressed_size,     ux); // ZIP64では、0xFFFFFFFFに固定する.
+	DUMP4 ("uncompressed size",               w32,                 ux); // ZIP64では、0xFFFFFFFFに固定する.
+	DUMP2 ("file name length",                file_name_length,    ux); // 65,535以上は不可.
+	DUMP2 ("extra field length",              extra_field_length,  ux); // 65,535以上は不可.
+	DUMP2 ("file comment length",             file_comment_length, ux); // 65,535以上は不可.
+	DUMP2 ("disk number start",               w16,                uFF); // ZIP64では、0xFFFFに固定する.
+	DUMP2x("internal file attributes",        w16,                  x, Print_internal_file_attributes(fout, w16));
+	DUMP4x("external file attributes",        w32,                  x, Print_external_file_attributes(fout, w32));
+	DUMP4 ("relative offset of local header", w32,                 ux); // ZIP64では、0xFFFFFFFFに固定する.
 
 	if (file_name_length) {
 		Print_section(fout, "file name", _ftelli64(fin), n);
@@ -1520,7 +1531,7 @@ void Dump_Zip64_end_of_central_directory_record(FILE* fin, FILE* fout)
 	uint64 size = 0;
 
 	//     "12345678901234567890123456789012",
-	DUMP8 ("size",                            size, ux);
+	DUMP8 ("size of this record",             size, ux);
 	DUMP2x("version made by",                 w16,  x, Print_version(fout, w16));
 	DUMP2x("version needed to extract",       w16,  u, Print_version(fout, w16));
 	DUMP4 ("number of this disk",             w32,  u);
@@ -1532,6 +1543,7 @@ void Dump_Zip64_end_of_central_directory_record(FILE* fin, FILE* fout)
 
 	Print_section(fout, "zip64 extensible data sector", _ftelli64(fin));
 	Dump_bytes(fin, fout, size - 2*2 - 4*2 - 8*4); // sizeフィールド以後の固定長を減ずる.
+	// Todo: ID(2),SIZE(4) の詳細ダンプを行う.
 }
 
 void Dump_Zip64_end_of_central_directory_locator(FILE* fin, FILE* fout)
