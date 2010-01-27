@@ -59,7 +59,7 @@ const char* gUsage  = "usage :zipdump [-h?fqosr] [-d<DIR>] file1.zip file2.zip .
 
 /** detail help-message for options and version */
 const char* gUsage2 =
-	"  version 1.1 (r33)\n"
+	"  version 1.2 (r43)\n"
 	"  -h -?      this help\n"
 	"  -f         full dump\n"
 	"  -q         quiet mode\n"
@@ -67,7 +67,7 @@ const char* gUsage2 =
 	"  -s         output to stdout instend of files(*.zipdump)\n"
 	"  -r         recursive search under the input-file's folder(wildcard needed)\n"
 	"  -d<DIR>    output to DIR\n"
-	"  fileN.cpp  input-files. wildcard OK\n"
+	"  fileN.zip  input-files. wildcard OK\n"
 	;
 //@}
 
@@ -1252,7 +1252,7 @@ void Dump_Local_file(FILE* fin, FILE* fout, int n)
 	uint32 w32, compressed_size=0;
 
 	//     "12345678901234567890123456789012",
-	DUMP2x("version needed to extract",       w16,                 u, Print_version(fout, w16));
+	DUMP2x("version needed to extract",       w16,                 x, Print_version(fout, w16));
 	DUMP2 ("general purpose bit flag",        flags,               x);
 	DUMP2x("compression method",              method,              x, Print_general_purpose_bit_flag(fout, flags, method));
 	DUMP2 ("last mod file time",              mod_time,            x);
@@ -1405,7 +1405,7 @@ void Dump_Central_directory_file_header(FILE* fin, FILE* fout, int n)
 
 	//     "12345678901234567890123456789012",
 	DUMP2x("version made by",                 w16,                  x, Print_version(fout, w16));
-	DUMP2x("version needed to extract",       w16,                  u, Print_version(fout, w16));
+	DUMP2x("version needed to extract",       w16,                  x, Print_version(fout, w16));
 	DUMP2 ("general purpose bit flag",        flags,                x);
 	DUMP2x("compression method",              method,               x, Print_general_purpose_bit_flag(fout, flags, method));
 	DUMP2 ("last mod file time",              mod_time,             x);
@@ -1533,7 +1533,7 @@ void Dump_Zip64_end_of_central_directory_record(FILE* fin, FILE* fout)
 	//     "12345678901234567890123456789012",
 	DUMP8 ("size of this record",             size, ux);
 	DUMP2x("version made by",                 w16,  x, Print_version(fout, w16));
-	DUMP2x("version needed to extract",       w16,  u, Print_version(fout, w16));
+	DUMP2x("version needed to extract",       w16,  x, Print_version(fout, w16));
 	DUMP4 ("number of this disk",             w32,  u);
 	DUMP4 ("disk of starting directory",      w32,  u);
 	DUMP8 ("directory-entries on this disk",  w64,  u);
@@ -1806,7 +1806,7 @@ next_arg:
 //------------------------------------------------------------------------
 /**@page zipdump-manual zipdump.exe - dump zip file structure
 
-@version 1.1 (r33)
+@version 1.2 (r43)
 
 @author Hiroshi Kuno <http://code.google.com/p/win32cmdx/>
 
@@ -1839,7 +1839,7 @@ next_arg:
 	@verbinclude zipdump.example
 
 @section todo 改善予定
-	- none
+	- "zip64 extensible data sector" の構造ダンプを行う.
 
 @section links リンク
 	- http://code.google.com/p/win32cmdx/ - zipdump開発サイト
@@ -1850,9 +1850,10 @@ next_arg:
 	- http://code.google.com/p/win32cmdx/downloads/list
 
 @section changelog 改訂履歴
-	- version-1.2 [Jan 23, 2010] 最新版
+	- version-1.2 [Jan 28, 2010] 最新版
 		- 主要な extra field を構造ダンプする.
 		- 出力ファイルの拡張子を ".zipdump.txt" から ".zipdump" に変更した.
+		- フィールド説明文が32文字を越える箇所は短い文章に改めて、出力レイアウトが崩れないようにした.
 	- version-1.1 [Jan 19, 2010]
 		- 文字列ダンプにて、制御コードを ^@ 形式でエスケープする.
 		- big-endianマシン対応.
