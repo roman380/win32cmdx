@@ -202,6 +202,7 @@ bool Read64(FILE* fin, uint64& val)
 //........................................................................
 //!@name print a field.
 //@{
+/** print %u */
 void Print_u(FILE* fout, const char* prompt, uint8 a)
 {
 	fprintf(fout, "%32s : %u\n", prompt, a);
@@ -222,6 +223,7 @@ void Print_u(FILE* fout, const char* prompt, uint64 a)
 	fprintf(fout, "%32s : %I64u\n", prompt, a);
 }
 
+/** print %X */
 void Print_x(FILE* fout, const char* prompt, uint8 a)
 {
 	fprintf(fout, "%32s : 0x%02X\n", prompt, a);
@@ -242,6 +244,7 @@ void Print_x(FILE* fout, const char* prompt, uint64 a)
 	fprintf(fout, "%32s : 0x%016I64X\n", prompt, a);
 }
 
+/** print %d(%X) */
 void Print_ux(FILE* fout, const char* prompt, uint8 a)
 {
 	fprintf(fout, "%32s : %u(0x%02X)\n", prompt, a, a);
@@ -262,11 +265,30 @@ void Print_ux(FILE* fout, const char* prompt, uint64 a)
 	fprintf(fout, "%32s : %u(0x%016I64X)\n", prompt, a, a);
 }
 
+/** print %d or 0xFFFF */
+void Print_uFF(FILE* fout, const char* prompt, uint16 a)
+{
+	if (a != 0xffffU)
+		Print_u(fout, prompt, a);
+	else
+		Print_x(fout, prompt, a);
+}
+
+void Print_uFF(FILE* fout, const char* prompt, uint32 a)
+{
+	if (a != 0xffffffffU)
+		Print_u(fout, prompt, a);
+	else
+		Print_x(fout, prompt, a);
+}
+
+/** print %s */
 void Print_note(FILE* fout, const char* note)
 {
 	fprintf(fout, "%32s * %s\n", "", note);
 }
 
+/** print format ... */
 void Printf_note(FILE* fout, const char* fmt, ...)
 {
 	fprintf(fout, "%32s * ", "");
@@ -1383,7 +1405,7 @@ void Dump_Central_directory_file_header(FILE* fin, FILE* fout, int n)
 	DUMP2 ("extra field length",        extra_field_length,  ux); // 65,535以上は不可.
 	DUMP2 ("file comment length",       file_comment_length, ux); // 65,535以上は不可.
 
-	DUMP2 ("disk number start",               w16,           u);
+	DUMP2 ("disk number start",               w16,           uFF); // ZIP64では、0xFFFFに固定する.
 	DUMP2x("internal file attributes",        w16,           x, Print_internal_file_attributes(fout, w16));
 	DUMP4x("external file attributes",        w32,           x, Print_external_file_attributes(fout, w32));
 	DUMP4 ("relative offset of local header", w32,           ux);
@@ -1497,15 +1519,16 @@ void Dump_Zip64_end_of_central_directory_record(FILE* fin, FILE* fout)
 	uint64 w64;
 	uint64 size = 0;
 
-	DUMP8 ("size of zip64 end of central directory record",                 size, ux);
-	DUMP2x("version made by",                                               w16,  x, Print_version(fout, w16));
-	DUMP2x("version needed to extract",                                     w16,  u, Print_version(fout, w16));
-	DUMP4 ("number of this disk",                                           w32,  u);
-	DUMP4 ("number of the disk with the start of the central directory",    w32,  u);
-	DUMP8 ("total number of entries in the central directory on this disk", w64,  u);
-	DUMP8 ("total number of entries in the central directory",              w64,  u);
-	DUMP8 ("size of the central directory",                                 w64,  ux);
-	DUMP8 ("offset of start of central directory with respect to the starting disk number", w64, ux);
+	//     "12345678901234567890123456789012",
+	DUMP8 ("size",                            size, ux);
+	DUMP2x("version made by",                 w16,  x, Print_version(fout, w16));
+	DUMP2x("version needed to extract",       w16,  u, Print_version(fout, w16));
+	DUMP4 ("number of this disk",             w32,  u);
+	DUMP4 ("disk of starting directory",      w32,  u);
+	DUMP8 ("directory-entries on this disk",  w64,  u);
+	DUMP8 ("directory-entries in all disks",  w64,  u);
+	DUMP8 ("size of the directory",           w64,  ux);
+	DUMP8 ("offset of starting directory",    w64,  ux);
 
 	Print_section(fout, "zip64 extensible data sector", _ftelli64(fin));
 	Dump_bytes(fin, fout, size - 2*2 - 4*2 - 8*4); // sizeフィールド以後の固定長を減ずる.
@@ -1525,12 +1548,13 @@ void Dump_Zip64_end_of_central_directory_locator(FILE* fin, FILE* fout)
         end of central directory record 8 bytes
         total number of disks           4 bytes
 */
-	uint32 w32, size = 0;
+	uint32 w32;
 	uint64 w64;
 
-	DUMP4("number of the disk with the start of the zip64 end of central directory", w32, u);
-	DUMP8("relative offset of the zip64 end of central directory record",            w64, ux);
-	DUMP4("total number of disks",                                                   w32, u);
+	//    "12345678901234567890123456789012",
+	DUMP4("disk of starting directory",      w32, u);
+	DUMP8("relative offset of zip64 record", w64, ux);
+	DUMP4("total number of disks",           w32, u);
 }
 
 void Dump_End_of_central_directory_record(FILE* fin, FILE* fout)
@@ -1556,12 +1580,13 @@ void Dump_End_of_central_directory_record(FILE* fin, FILE* fout)
 	uint16 w16, zipfile_comment_length = 0;
 	uint32 w32;
 
-	DUMP2("number of this disk", w16, u);
-	DUMP2("number of the disk with the start of the central directory",    w16, u);
-	DUMP2("total number of entries in the central directory on this disk", w16, u);
-	DUMP2("total number of entries in the central directory", w16, u);
-	DUMP4("size of the central directory", w32, ux);
-	DUMP4("offset of start of central directory with respect to the starting disk number", w32, ux);
+	//    "12345678901234567890123456789012",
+	DUMP2("number of this disk",             w16, uFF); // ZIP64では、0xFFFFに固定する.
+	DUMP2("disk of starting directory",      w16, uFF); // ZIP64では、0xFFFFに固定する.
+	DUMP2("directory-entries on this disk",  w16, uFF); // ZIP64では、0xFFFFに固定する.
+	DUMP2("directory-entries in all disks",  w16, uFF); // ZIP64では、0xFFFFに固定する.
+	DUMP4("size of the directory",           w32, ux);  // ZIP64では、0xFFFFFFFFに固定する.
+	DUMP4("offset of starting directory",    w32, ux);  // ZIP64では、0xFFFFFFFFに固定する.
 	DUMP2(".ZIP file comment length", zipfile_comment_length, ux); // 65,535以上は不可.
 	if (zipfile_comment_length) {
 		Print_section(fout, ".ZIP file comment", _ftelli64(fin));
