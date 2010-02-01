@@ -141,12 +141,13 @@ public:
 
 bool Clipboard::SetText(const std::string& s)
 {
-	HGLOBAL h = GlobalAlloc(GHND, s.length() + 2);
+	size_t alloc_size = s.length() + 2;
+	HGLOBAL h = GlobalAlloc(GHND, alloc_size);
 	if (!h)
 		throw runtime_error("no memory");
 
 	LPSTR p = static_cast<LPSTR>(GlobalLock(h));
-	s.copy(p, s.length()); // GHND‚ÅŠm•Û‚µ‚½‚Ì‚Ås‚Ì––”ö‚ÍŒ³‚©‚ç 0 ‚Å‚ ‚é.
+	s._Copy_s(p, alloc_size, s.length()); // GHND‚ÅŠm•Û‚µ‚½‚Ì‚Ås‚Ì––”ö‚ÍŒ³‚©‚ç 0 ‚Å‚ ‚é.
 	GlobalUnlock(h);
 	return SetData(CF_TEXT, h);
 }
