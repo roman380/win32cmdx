@@ -1,13 +1,13 @@
-# Makefile - for zipdump, clip
+# Makefile - for zipdump, clip, renamex
 #
 # Project Home: http://code.google.com/p/win32cmdx/
 # Code license: New BSD License
 #-------------------------------------------------------------------------
 # MACROS
 #
-TARGET  =zipdump.exe clip.exe
-SOLUTION=zipdump.sln clip.sln
-MANUAL  =docs\zipdump-manual.html docs\clip-manual.html
+TARGET  =zipdump.exe clip.exe renamex.exe
+SOLUTION=zipdump.sln clip.sln renamex.sln
+MANUAL  =docs\zipdump-manual.html docs\clip-manual.html docs\renamex-manual.html
 DOXYINDEX=html\index.html
 SRC=Makefile *.sln *.vcproj *.vsprops src/*
 
@@ -50,7 +50,7 @@ man: $(MANUAL)
 doxy: $(DOXYINDEX)
 	start $**
 
-zipdump.verup clip.verup:
+zipdump.verup clip.verup renamex.verup:
 	svn up
 	perl -i.bak version-up.pl src/$*.cpp src/$*.*
 
@@ -65,7 +65,7 @@ $(TARGET): $(SRC)
 #.........................................................................
 # DOCUMENT
 #
-USAGE  =zipdump.usage clip.usage
+USAGE  =zipdump.usage clip.usage renamex.usage
 EXAMPLE=zipdump.example
 $(DOXYINDEX): src/*.cpp Doxyfile $(USAGE) $(EXAMPLE)
 	doxygen
