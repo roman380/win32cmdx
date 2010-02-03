@@ -127,8 +127,8 @@ inline char* stristr(const char* s1, const char* s2)
 	int lo = tolower((uchar) s2[0]);
 	int len = strlen(s2);
 	while (*s1) {
-		char* upper = strchr(s1, up);
-		char* lower = strchr(s1, lo);
+		const char* upper = strchr(s1, up);
+		const char* lower = strchr(s1, lo);
 		s1 = (!lower || (upper && upper < lower)) ? upper : lower;
 		if (!s1)
 			return NULL;
