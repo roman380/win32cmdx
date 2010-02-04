@@ -74,7 +74,7 @@ BEGIN
             VALUE "FileDescription", "clipboard filter"
             VALUE "FileVersion", "1, 5, 0, 22"
             VALUE "InternalName", "clip"
-            VALUE "LegalCopyright", "Copyright (C) 2010"
+            VALUE "LegalCopyright", "Copyright (C) 2001, 2003, 2004, 2010"
             VALUE "OriginalFilename", "clip.exe"
             VALUE "ProductName", "clip"
             VALUE "ProductVersion", "1, 5, 0, 22"

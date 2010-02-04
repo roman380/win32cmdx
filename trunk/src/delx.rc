@@ -74,7 +74,7 @@ BEGIN
             VALUE "FileDescription", "send files to recycler"
             VALUE "FileVersion", "0, 1, 0, 48"
             VALUE "InternalName", "delx"
-            VALUE "LegalCopyright", "Copyright (C) 2010"
+            VALUE "LegalCopyright", "Copyright (C) 2001, 2010"
             VALUE "OriginalFilename", "delx.exe"
             VALUE "ProductName", "delx"
             VALUE "ProductVersion", "0, 1, 0, 48"
