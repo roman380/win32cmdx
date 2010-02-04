@@ -5,9 +5,9 @@
 #-------------------------------------------------------------------------
 # MACROS
 #
-TARGET  =zipdump.exe clip.exe renamex.exe delx.exe
-SOLUTION=zipdump.sln clip.sln renamex.sln delx.sln
-MANUAL  =docs\zipdump-manual.html docs\clip-manual.html docs\renamex-manual.html docs\delx-manual.html
+TARGET  =zipdump.exe clip.exe renamex.exe delx.exe dirdiff.exe
+SOLUTION=zipdump.sln clip.sln renamex.sln delx.sln dirdiff.sln
+MANUAL  =docs\zipdump-manual.html docs\clip-manual.html docs\renamex-manual.html docs\delx-manual.html docs\dirdiff-manual.html
 DOXYINDEX=html\index.html
 SRC=Makefile *.sln *.vcproj *.vsprops src/*
 
