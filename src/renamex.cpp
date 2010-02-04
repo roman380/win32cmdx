@@ -1,6 +1,5 @@
-/**@file xrename.cpp -- rename file with pattern.
- * $Id: xrename.cpp,v 1.3 2003/03/19 05:46:44 hkuno Exp $
- * @author Hiroshi Kuno <hkuno@micorhouse.co.jp>
+/**@file renamex.cpp --- rename file with pattern.
+ * @author Hiroshi Kuno <http://code.google.com/p/win32cmdx/>
  */
 #include <windows.h>
 #include <stdio.h>
@@ -20,16 +19,24 @@ using namespace std;
 //------------------------------------------------------------------------
 // 型、定数、グローバル変数の定義
 //........................................................................
-// typedef and constants
-/** 無符号文字型の別名 */
+//@{
+/** alias of integer type */
 typedef unsigned char uchar;
+typedef unsigned short ushort;
+typedef unsigned int   uint;
+typedef unsigned long  ulong;
+typedef unsigned __int8  uint8;
+typedef unsigned __int16 uint16;
+typedef unsigned __int32 uint32;
+typedef unsigned __int64 uint64;
+//@}
 
-/** 無符号long型の別名 */
-typedef unsigned long ulong;
+/** max file/path name length. Unicodeで_MAX_PATH文字なので、MBCSではその倍の長さとなる可能性がある. */
+#define MY_MAX_PATH	(_MAX_PATH * 2)
 
 //........................................................................
-// global variables
-
+//!@name option settings
+//@{
 /** -c: case sensitive scan */
 bool gCaseSensitive = false;
 
@@ -41,15 +48,17 @@ bool gTestOnly = false;
 
 /** -i: ignore error */
 bool gIgnoreError = false;
+//@}
 
 //........................................................................
-// messages
+//!@name messages
+//@{
 /** short help-message */
-const char* gUsage  = "usage :xrename [-h?cdni] FROM TO FILES\n";
+const char* gUsage  = "usage :renamex [-h?cdni] FROM TO FILES\n";
 
 /** detail help-message for options and version */
 const char* gUsage2 =
-	"  $Revision: 1.3 $\n"
+	"  version 1.3 (r48)\n"
 	"  -h -?  this help\n"
 	"  -c     case sensitive scan\n"
 	"  -d     sub directory recursive scan\n"
@@ -59,9 +68,12 @@ const char* gUsage2 =
 	"  TO     replace to pattern\n"
 	"  FILES  file match pattern(default is '*')\n"
 	;
+//@}
 
 //------------------------------------------------------------------------
-///@name 汎用エラー処理関数
+// 汎用関数群
+//........................................................................
+//!@name エラー処理系.
 //@{
 /** usageとエラーメッセージを表示後に、exitする */
 void error_abort(const char* msg = NULL)
@@ -99,8 +111,8 @@ void print_win32error(const char* msg)
 }
 //@}
 
-//------------------------------------------------------------------------
-///@name 汎用文字列関数群
+//........................................................................
+//!@name 文字列処理系.
 //@{
 /** s1とs2は等しいか? */
 inline bool strequ(const char* s1, const char* s2)
@@ -404,5 +416,53 @@ show_help:			error_abort(gUsage2);
 	}
 	return EXIT_SUCCESS;
 }
+//------------------------------------------------------------------------
+/**@page renamex-manual renamex.exe - rename file with pattern
 
-// decomment.cpp - end.
+@version 1.3 (r48)
+
+@author Hiroshi Kuno <http://code.google.com/p/win32cmdx/>
+
+@par License:
+	New BSD License
+	<br>Copyright &copy; 2003,2010 by Hiroshi Kuno
+	<br>本ソフトウェアは無保証かつ無償で提供します。利用、再配布、改変は自由です。
+
+<hr>
+@section intro はじめに
+	renamexは、ファイル名の一部分を一括パターン置換するコマンドです。
+
+@section renamex-func 特徴
+	- ワイルドカードでリネーム対象を指定できます。
+	- フォルダ再帰検索でフォルダ以下を一括処理するこが可能です。
+
+@section env 動作環境
+	Windows2000以降を動作対象としています。
+	WindowsXP にて動作確認済み。
+
+@section install インストール方法
+	配布ファイル renamex.exe を、PATHが通ったフォルダにコピーしてください。
+	アインインストールするには、そのコピーしたファイルを削除してください。
+
+@section usage 使い方
+	@verbinclude renamex.usage
+
+@section renamex-example 使用例
+	@verbatim
+	@@@Todo Here!!
+	@endverbatim
+
+@section todo 改善予定
+	- なし。
+
+@section links リンク
+	- http://code.google.com/p/win32cmdx/ - renamex開発サイト
+
+@section download ダウンロード
+	- http://code.google.com/p/win32cmdx/downloads/list
+
+@section changelog 改訂履歴
+	- version-1.3 [Feb xx, 2010] 公開初版
+*/
+
+// renamex.cpp - end.

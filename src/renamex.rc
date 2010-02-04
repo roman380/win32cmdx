@@ -53,8 +53,8 @@ END
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 1,5,0,22
- PRODUCTVERSION 1,5,0,22
+ FILEVERSION 1,3,0,48
+ PRODUCTVERSION 1,3,0,48
  FILEFLAGSMASK 0x17L
 #ifdef _DEBUG
  FILEFLAGS 0x1L
@@ -71,13 +71,13 @@ BEGIN
         BEGIN
             VALUE "Comments", "ProjectHome: http://code.google.com/p/win32cmdx/"
             VALUE "CompanyName", "New BSD License"
-            VALUE "FileDescription", "file rename command"
-            VALUE "FileVersion", "1, 0, 0, 22"
+            VALUE "FileDescription", "rename file with pattern"
+            VALUE "FileVersion", "1, 3, 0, 48"
             VALUE "InternalName", "renamex"
             VALUE "LegalCopyright", "Copyright (C) 2010"
             VALUE "OriginalFilename", "renamex.exe"
             VALUE "ProductName", "renamex"
-            VALUE "ProductVersion", "1, 0, 0, 22"
+            VALUE "ProductVersion", "1, 3, 0, 48"
         END
     END
     BLOCK "VarFileInfo"
