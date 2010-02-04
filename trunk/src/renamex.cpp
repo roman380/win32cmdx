@@ -40,7 +40,7 @@ typedef unsigned __int64 uint64;
 /** -c: case sensitive scan */
 bool gCaseSensitive = false;
 
-/** -d: sub directory recursive scan */
+/** -r: sub directory recursive scan */
 bool gRecursive = false;
 
 /** -n: test only */
@@ -267,6 +267,14 @@ public:
 	bool IsFolder() const {
 		return (attrib & _A_SUBDIR) != 0;
 	}
+	/** 隠し属性か? */
+	bool IsHidden() const {
+		return (attrib & _A_HIDDEN) != 0;
+	}
+	/** システム属性か? */
+	bool IsSystem() const {
+		return (attrib & _A_SYSTEM) != 0;
+	}
 	/** 相対フォルダ("." or "..")か? */
 	bool IsDotFolder() const;
 };
@@ -346,6 +354,8 @@ void Rename(const char* from, const char* to, const char* dir, const char* wild)
 		find.Close();
 		for (find.Open(dir, "*"); find; find.Next()) {
 			if (find.IsFolder() && !find.IsDotFolder()) {
+				if (find.IsHidden() || find.IsSystem()) continue;
+				if (strequ(find.name, "CVS")) continue;
 				char subdir[_MAX_PATH + _MAX_FNAME + 10];
 				make_pathname(subdir, dir, find.name);
 				strcat(subdir, "\\");
@@ -375,7 +385,7 @@ show_help:			error_abort(gUsage2);
 				case 'c':
 					gCaseSensitive = true;
 					break;
-				case 'd':
+				case 'r':
 					gRecursive = true;
 					break;
 				case 'n':
