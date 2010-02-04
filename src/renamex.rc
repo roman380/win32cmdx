@@ -74,7 +74,7 @@ BEGIN
             VALUE "FileDescription", "rename file with pattern"
             VALUE "FileVersion", "1, 3, 0, 48"
             VALUE "InternalName", "renamex"
-            VALUE "LegalCopyright", "Copyright (C) 2010"
+            VALUE "LegalCopyright", "Copyright (C) 2003, 2010"
             VALUE "OriginalFilename", "renamex.exe"
             VALUE "ProductName", "renamex"
             VALUE "ProductVersion", "1, 3, 0, 48"
