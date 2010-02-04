@@ -5,9 +5,9 @@
 #-------------------------------------------------------------------------
 # MACROS
 #
-TARGET  =zipdump.exe clip.exe renamex.exe
-SOLUTION=zipdump.sln clip.sln renamex.sln
-MANUAL  =docs\zipdump-manual.html docs\clip-manual.html docs\renamex-manual.html
+TARGET  =zipdump.exe clip.exe renamex.exe delx.exe
+SOLUTION=zipdump.sln clip.sln renamex.sln delx.sln
+MANUAL  =docs\zipdump-manual.html docs\clip-manual.html docs\renamex-manual.html docs\delx-manual.html
 DOXYINDEX=html\index.html
 SRC=Makefile *.sln *.vcproj *.vsprops src/*
 
@@ -50,7 +50,7 @@ man: $(MANUAL)
 doxy: $(DOXYINDEX)
 	start $**
 
-zipdump.verup clip.verup renamex.verup:
+zipdump.verup clip.verup renamex.verup delx.verup:
 	svn up
 	perl -i.bak version-up.pl src/$*.cpp src/$*.*
 
