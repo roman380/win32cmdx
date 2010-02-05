@@ -1,23 +1,34 @@
-/**@name del9.cpp
- * Windows95/98/NT4/2000ゴミ箱転送付きの delコマンド
- * @author Hiroshi Kuno
- *      <P> Copyleft 2000 hkuno.kuno@nifty.ne.jp
- * @version 0.1
- * $Id: del9.cpp,v 1.1 2001/04/18 06:51:53 hkuno Exp $
- * @make bcc32 -WC -x- -RT- -X -O1 del9.cpp noeh32.lib
+/**@name delx.cpp --- ファイルをWindowsのゴミ箱へ送る.
+ * @author Hiroshi Kuno <http://code.google.com/p/win32cmdx/>
  */
-
+#include <windows.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <windows.h>
 #include <shellapi.h>
 
-/** ゴミ箱へファイルを送る
+/** max file/path name length. Unicodeで_MAX_PATH文字なので、MBCSではその倍の長さとなる可能性がある. */
+#define MY_MAX_PATH	(_MAX_PATH * 2)
+
+//........................................................................
+//!@name messages
+//@{
+/** short help-message */
+const char* gUsage  = "usage :delx FILE1 FILE2...\n";
+
+/** detail help-message for options and version */
+const char* gUsage2 =
+	"  version 1.0 (r56)\n"
+	"  FLIE#  sending to recycler. wildcard OK\n"
+	;
+//@}
+
+//------------------------------------------------------------------------
+/** ゴミ箱へファイルを送る.
  * @param fname ファイル名。ワイルドカード可。
  */
-int recycle_bin(char* fname)
+int recycle_bin(const char* fname)
 {
-	char fullname[1000];
+	char fullname[MY_MAX_PATH+2];
 	char* last;
 
 	// SHFileOperationは fullpathでないと受け付けない
@@ -35,14 +46,13 @@ int recycle_bin(char* fname)
 	return SHFileOperation(&op);
 }
 
+//------------------------------------------------------------------------
 /** メイン */
 int main(int argc, char** argv)
 {
 	if (argc < 2) {
-		fputs(
-			"del9 - ごみ箱送りのdelコマンド\n"
-			"usage: del9 *.bak\n",
-			stderr);
+		fputs(gUsage, stderr);
+		fputs(gUsage2, stderr);
 		return EXIT_FAILURE;
 	}
 	for (int i = 1; i < argc; ++i)
@@ -50,4 +60,48 @@ int main(int argc, char** argv)
 //	Sleep(100);
 	return EXIT_SUCCESS;
 }
+//------------------------------------------------------------------------
+/**@page delx-manual delx.exe - send files to recycler.
+
+@version 1.0 (r56)
+
+@author Hiroshi Kuno <http://code.google.com/p/win32cmdx/>
+
+@par License:
+	New BSD License
+	<br>Copyright &copy; 2000, 2010 by Hiroshi Kuno
+	<br>本ソフトウェアは無保証かつ無償で提供します。利用、再配布、改変は自由です。
+
+@section intro はじめに
+	delxは、ファイルをWindowsのゴミ箱へ送るコンソールアプリケーションです。
+	コマンドライン上からゴミ箱へファイルを送りたい場合に便利です。
+
+@section func 特徴
+	- ワイルドカードでファイルを指定できます。
+
+@section env 動作環境
+	Windows2000以降を動作対象としています。
+	WindowsXP にて動作確認済み。
+
+@section install インストール方法
+	配布ファイル delx.exe を、PATHが通ったフォルダにコピーしてください。
+	アインインストールするには、そのコピーしたファイルを削除してください。
+
+@section delx-usage 使い方
+	@@@todo
+
+@section delx-example 出力例
+	@@@todo
+
+@section links リンク
+	- http://code.google.com/p/win32cmdx/ - delx開発サイト
+
+@section download ダウンロード
+	- http://code.google.com/p/win32cmdx/downloads/list
+
+@section changelog 改訂履歴
+	- version-1.0 [Feb xx, 2010] 公開初版
+	- version-0.1 [Apr 18, 2001] original
+*/
+
 // del9.cpp - end.
