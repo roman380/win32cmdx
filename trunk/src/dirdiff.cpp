@@ -1,6 +1,5 @@
-/**@file newdate.cpp -- compare and diff folder.
- * $Id: newdate.cpp,v 1.5 2005/10/19 08:20:47 hkuno Exp $
- * @author Hiroshi Kuno <hkuno@micorhouse.co.jp>
+/**@file dirdiff.cpp -- compare and diff folder.
+ * @author Hiroshi Kuno <http://code.google.com/p/win32cmdx/>
  */
 #include <windows.h>
 #include <stdio.h>
@@ -20,19 +19,28 @@ using namespace std;
 //------------------------------------------------------------------------
 // 型、定数、グローバル変数の定義
 //........................................................................
-// typedef and constants
-/** 無符号文字型の別名 */
+//@{
+/** alias of integer type */
 typedef unsigned char uchar;
 
-/** 無符号long型の別名 */
+typedef unsigned short ushort;
+typedef unsigned int   uint;
 typedef unsigned long ulong;
+typedef unsigned __int8  uint8;
+typedef unsigned __int16 uint16;
+typedef unsigned __int32 uint32;
+typedef unsigned __int64 uint64;
+//@}
+
+/** max file/path name length. Unicodeで_MAX_PATH文字なので、MBCSではその倍の長さとなる可能性がある. */
+#define MY_MAX_PATH	(_MAX_PATH * 2)
 
 /** ISO 8601形式に整形するstrftime()の書式 */
 #define ISO8601FMT	"%Y-%m-%dT%H:%M:%S"
 
 //........................................................................
-// global variables
-
+//!@name option settings
+//@{
 /** -s: ignore same file date */
 bool gIgnoreSameFileDate = false;
 
@@ -47,15 +55,17 @@ bool gDiff = false;
 
 /** -t,-T: time format */
 const char* gTmFmt = ISO8601FMT;
+//@}
 
 //........................................................................
-// messages
+//!@name messages
+//@{
 /** short help-message */
-const char* gUsage  = "usage :newdate [-h?srlutTd] DIR1 [DIR2] [WILD]\n";
+const char* gUsage  = "usage :dirdiff [-h?srlutTd] DIR1 [DIR2] [WILD]\n";
 
 /** detail help-message for options and version */
 const char* gUsage2 =
-	"  $Revision: 1.5 $\n"
+	"  version 1.6 (r57)$\n"
 	"  -h -?  this help\n"
 	"  -s     ignore same file date\n"
 	"  -r     ignore right only file\n"
@@ -68,9 +78,12 @@ const char* gUsage2 =
 	"  DIR2   compare folder(default is current-folder)\n"
 	"  WILD   file match pattern(default is '*')\n"
 	;
+//@}
 
 //------------------------------------------------------------------------
-///@name 汎用エラー処理関数
+// 汎用関数群
+//........................................................................
+//!@name エラー処理系.
 //@{
 /** usageとエラーメッセージを表示後に、exitする */
 void error_abort(const char* msg = NULL)
@@ -108,8 +121,8 @@ void print_win32error(const char* msg)
 }
 //@}
 
-//------------------------------------------------------------------------
-///@name 汎用文字列関数群
+//........................................................................
+//!@name 文字列処理系.
 //@{
 /** s1とs2は等しいか? */
 inline bool strequ(const char* s1, const char* s2)
@@ -258,6 +271,14 @@ public:
 	/** フォルダか? */
 	bool IsFolder() const {
 		return (attrib & _A_SUBDIR) != 0;
+	}
+	/** 隠し属性か? */
+	bool IsHidden() const {
+		return (attrib & _A_HIDDEN) != 0;
+	}
+	/** システム属性か? */
+	bool IsSystem() const {
+		return (attrib & _A_SYSTEM) != 0;
 	}
 	/** 相対フォルダ("." or "..")か? */
 	bool IsDotFolder() const;
@@ -477,5 +498,53 @@ show_help:			error_abort(gUsage2);
 
 	return EXIT_SUCCESS;
 }
+//------------------------------------------------------------------------
+/**@page dirdiff-manual dirdiff.exe - show differ of directories
 
-// decomment.cpp - end.
+@version 1.6 (r57)
+
+@author Hiroshi Kuno <http://code.google.com/p/win32cmdx/>
+
+@par License:
+	New BSD License
+	<br>Copyright &copy; 1989, 1990, 2003, 2005, 2010 by Hiroshi Kuno
+	<br>本ソフトウェアは無保証かつ無償で提供します。利用、再配布、改変は自由です。
+
+<hr>
+@section intro はじめに
+	dirdiffは、ディレクトリ間のファイルリストの差異を比較するツールです.
+
+@section dirdiff-func 特徴
+	- ワイルドカードでリネーム対象を指定できます。
+
+@section env 動作環境
+	Windows2000以降を動作対象としています。
+	WindowsXP にて動作確認済み。
+
+@section install インストール方法
+	配布ファイル dirdiff.exe を、PATHが通ったフォルダにコピーしてください。
+	アインインストールするには、そのコピーしたファイルを削除してください。
+
+@section dirdiff-usage 使い方
+	@verbinclude dirdiff.usage
+
+@section dirdiff-example 使用例
+	@verbatim
+	@@@Todo Here!!
+	@endverbatim
+
+@section todo 改善予定
+	- なし.
+
+@section links リンク
+	- http://code.google.com/p/win32cmdx/ - dirdiff開発サイト
+
+@section download ダウンロード
+	- http://code.google.com/p/win32cmdx/downloads/list
+
+@section changelog 改訂履歴
+	- version-1.6 [Feb xx, 2010] 公開初版
+	- version-1.5 [Oct 19, 2005] original
+*/
+
+// dirdiff.cpp - end.
