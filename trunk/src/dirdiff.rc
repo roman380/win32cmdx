@@ -74,7 +74,7 @@ BEGIN
             VALUE "FileDescription", "show differ of directories"
             VALUE "FileVersion", "1, 5, 0, 48"
             VALUE "InternalName", "dirdiff"
-            VALUE "LegalCopyright", "Copyright (C) 2002, 2003, 2005, 2010"
+            VALUE "LegalCopyright", "Copyright (C) 1989, 1990, 2002, 2003, 2005, 2010"
             VALUE "OriginalFilename", "dirdiff.exe"
             VALUE "ProductName", "dirdiff"
             VALUE "ProductVersion", "1, 5, 0, 48"
