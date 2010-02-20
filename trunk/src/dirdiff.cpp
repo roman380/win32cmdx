@@ -14,27 +14,19 @@
 #include <map>
 #include <vector>
 #include <string>
+
+#include "mydef.h"
 using namespace std;
+
+//------------------------------------------------------------------------
+// 汎用関数群 - inline関数が多いので、分割コンパイルせずincludeで取り込む.
+//........................................................................
+#include "mylib\errfunc.cpp"
+#include "mylib\strfunc.cpp"
 
 //------------------------------------------------------------------------
 // 型、定数、グローバル変数の定義
 //........................................................................
-//@{
-/** alias of integer type */
-typedef unsigned char uchar;
-
-typedef unsigned short ushort;
-typedef unsigned int   uint;
-typedef unsigned long ulong;
-typedef unsigned __int8  uint8;
-typedef unsigned __int16 uint16;
-typedef unsigned __int32 uint32;
-typedef unsigned __int64 uint64;
-//@}
-
-/** max file/path name length. Unicodeで_MAX_PATH文字なので、MBCSではその倍の長さとなる可能性がある. */
-#define MY_MAX_PATH	(_MAX_PATH * 2)
-
 /** ISO 8601形式に整形するstrftime()の書式 */
 #define ISO8601FMT	"%Y-%m-%dT%H:%M:%S"
 
@@ -83,82 +75,6 @@ const char* gUsage2 =
 //------------------------------------------------------------------------
 // 汎用関数群
 //........................................................................
-//!@name エラー処理系.
-//@{
-/** usageとエラーメッセージを表示後に、exitする */
-void error_abort(const char* msg = NULL)
-{
-	fputs(gUsage, stderr);
-	if (msg)
-		fputs(msg, stderr);
-	exit(EXIT_FAILURE);
-}
-
-void error_abort(const char* prompt, const char* arg)
-{
-	fputs(gUsage, stderr);
-	fprintf(stderr, "%s: %s\n", prompt, arg);
-	exit(EXIT_FAILURE);
-}
-
-void errorf_abort(const char* fmt, ...)
-{
-	fputs(gUsage, stderr);
-	va_list ap;
-	va_start(ap, fmt);
-	vfprintf(stderr, fmt, ap);
-	va_end(ap);
-	exit(EXIT_FAILURE);
-}
-
-/** エラーメッセージと、Win32の詳細エラー情報を表示する */
-void print_win32error(const char* msg)
-{
-	DWORD win32error = ::GetLastError();
-	char buf[1000];
-	::FormatMessageA(FORMAT_MESSAGE_FROM_SYSTEM, NULL, win32error, 0, buf, sizeof(buf), NULL);
-	fprintf(stderr, "%s: Win32Error(%d) %s", msg, win32error, buf);
-}
-//@}
-
-//........................................................................
-//!@name 文字列処理系.
-//@{
-/** s1とs2は等しいか? */
-inline bool strequ(const char* s1, const char* s2)
-{
-	return strcmp(s1, s2) == 0;
-}
-
-/** 大文字小文字を無視すれば, s1とs2は等しいか? */
-inline bool striequ(const char* s1, const char* s2)
-{
-	return _mbsicmp((const uchar*)s1, (const uchar*)s2) == 0;
-}
-
-/** s1はs2より小さいか? */
-inline bool strless(const char* s1, const char* s2)
-{
-	return _mbscmp((const uchar*)s1, (const uchar*)s2) < 0;
-}
-
-/** 大文字小文字を無視すれば, s1はs2より小さいか? */
-inline bool striless(const char* s1, const char* s2)
-{
-	return _mbsicmp((const uchar*)s1, (const uchar*)s2) < 0;
-}
-
-class StrILess {
-public:
-	bool operator()(const char* s1, const char* s2) const {
-		return striless(s1, s2);
-	}
-};
-
-
-//@}
-
-//------------------------------------------------------------------------
 ///@name ファイル名操作関数群
 //@{
 /** ワイルドカード記号を持っているか? */
