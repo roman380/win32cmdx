@@ -9,26 +9,18 @@
 #include <locale.h>
 #include <io.h>
 #include <ctype.h>
+
+#include "mydef.h"
 //using namespace std;
 
 //------------------------------------------------------------------------
-// 型、定数、グローバル変数の定義
+// 汎用関数群 - inline関数が多いので、分割コンパイルせずincludeで取り込む.
 //........................................................................
-//@{
-/** alias of integer type */
-typedef unsigned char  uchar;
-typedef unsigned short ushort;
-typedef unsigned int   uint;
-typedef unsigned long  ulong;
-typedef unsigned __int8  uint8;
-typedef unsigned __int16 uint16;
-typedef unsigned __int32 uint32;
-typedef unsigned __int64 uint64;
-//@}
+#include "mylib\errfunc.cpp"
+#include "mylib\strfunc.cpp"
 
-/** max file/path name length. Unicodeで_MAX_PATH文字なので、MBCSではその倍の長さとなる可能性がある. */
-#define MY_MAX_PATH	(_MAX_PATH * 2)
-
+//------------------------------------------------------------------------
+// 型、定数、グローバル変数の定義.
 //........................................................................
 //!@name option settings
 //@{
@@ -77,44 +69,6 @@ void Dump_Data_descriptor(FILE* fin, FILE* fout);
 
 //------------------------------------------------------------------------
 // 汎用関数群
-//........................................................................
-//!@name エラー処理系.
-//@{
-/** usageとエラーメッセージを表示後に、exitする */
-void error_abort(const char* msg)
-{
-	fputs(gUsage, stderr);
-	if (msg)
-		fputs(msg, stderr);
-	exit(EXIT_FAILURE);
-}
-
-/** エラーメッセージと、Win32の詳細エラー情報を表示する */
-void print_win32error(const char* msg)
-{
-	DWORD win32error = ::GetLastError();
-	char buf[1000];
-	::FormatMessageA(FORMAT_MESSAGE_FROM_SYSTEM, NULL, win32error, 0, buf, sizeof(buf), NULL);
-	fprintf(stderr, "%s: Win32Error(%d) %s", msg, win32error, buf);
-}
-//@}
-
-//........................................................................
-//!@name 文字列処理系.
-//@{
-/** s1とs2は等しいか? */
-inline bool strequ(const char* s1, const char* s2)
-{
-	return strcmp(s1, s2) == 0;
-}
-
-/** 印刷可能文字を返す. 印刷不可能文字に対しては'.'を返す */
-inline int ascii(int c)
-{
-	return (!iscntrl(c) && isprint(c)) ? c : '.';
-}
-//@}
-
 //........................................................................
 //!@name ファイル処理系.
 //@{
