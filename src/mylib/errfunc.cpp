@@ -9,11 +9,28 @@ extern const char* gUsage;
 
 //------------------------------------------------------------------------
 /** usageとエラーメッセージを表示後に、exitする */
-void error_abort(const char* msg)
+void error_abort(const char* msg = NULL)
 {
 	fputs(gUsage, stderr);
 	if (msg)
 		fputs(msg, stderr);
+	exit(EXIT_FAILURE);
+}
+
+void error_abort(const char* prompt, const char* arg)
+{
+	fputs(gUsage, stderr);
+	fprintf(stderr, "%s: %s\n", prompt, arg);
+	exit(EXIT_FAILURE);
+}
+
+void errorf_abort(const char* fmt, ...)
+{
+	fputs(gUsage, stderr);
+	va_list ap;
+	va_start(ap, fmt);
+	vfprintf(stderr, fmt, ap);
+	va_end(ap);
 	exit(EXIT_FAILURE);
 }
 
