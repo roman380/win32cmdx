@@ -1,4 +1,4 @@
-# Makefile - for zipdump, clip, renamex
+# Makefile - for zipdump, clip, renamex, delx, dirdiff
 #
 # Project Home: http://code.google.com/p/win32cmdx/
 # Code license: New BSD License
@@ -6,10 +6,12 @@
 # MACROS
 #
 TARGET  =zipdump.exe clip.exe renamex.exe delx.exe dirdiff.exe
-SOLUTION=zipdump.sln clip.sln renamex.sln delx.sln dirdiff.sln
-MANUAL  =docs\zipdump-manual.html docs\clip-manual.html docs\renamex-manual.html docs\delx-manual.html docs\dirdiff-manual.html
+MANUAL  =$(TARGET:.exe=-manual.html)
+SOLUTION=$(TARGET:.exe=.sln)
+VERUP   =$(TARGET:.exe=.verup)
 DOXYINDEX=html\index.html
-SRC=Makefile *.sln *.vcproj *.vsprops src/*
+APPSRC  =myconfig.vsprops src/*.h src/mylib/*	$*.sln $*.vcproj src/$*.cpp src/$*.rc
+ALLSRC  =myconfig.vsprops src/*.h src/mylib/*	*.sln  *.vcproj  src/*.cpp  src/*.rc
 
 #-------------------------------------------------------------------------
 # MAIN TARGET
@@ -22,7 +24,7 @@ rel:	rebuild man zip
 # COMMANDS
 #
 cleanall: clean
-	-del $(TARGET) *.zip *.ncb *.user *.dat *.cache *.bak *.tmp $$* *.usage *.example
+	-del $(TARGET) $(MANUAL) *.zip *.ncb *.user *.dat *.cache *.bak *.tmp $$* *.usage *.example
 	-del src\*.aps
 	-del /q html\*.* Release\*.* Debug\*.*
 
@@ -38,36 +40,40 @@ build: $(TARGET)
 zip:
 	svn status
 	del win32cmdx-???.zip
-	zip win32cmdx-src.zip $(SRC) Doxyfile *.pl test/* -x *.aps
+	zip win32cmdx-src.zip $(ALLSRC) Makefile Doxyfile *.pl test/* -x *.aps
 	zip win32dmdx-exe.zip -j $(TARGET) $(MANUAL) html/*.css
 
 install: $(TARGET)
 	!copy $** \home\bin
 
 man: $(MANUAL)
-	!start $**
+	!copy $** docs
+	copy html\*.css docs
 
 doxy: $(DOXYINDEX)
 	start $**
 
-zipdump.verup clip.verup renamex.verup delx.verup:
-	svn up
-	perl -i.bak version-up.pl src/$*.cpp src/$*.*
-
 #.........................................................................
 # BUILD
 #
-$(TARGET): $(SRC)
+$(TARGET:.exe=): $*.exe
+
+$(TARGET): $(APPSRC)
 	vcbuild /nologo $(@B).sln "Release|Win32"
 	copy Release\$@ $@
 	touch $@
+
+$(VERUP):
+	svn up
+	perl -i.bak version-up.pl src/$*.cpp src/$*.*
 
 #.........................................................................
 # DOCUMENT
 #
 USAGE  =zipdump.usage clip.usage renamex.usage
 EXAMPLE=zipdump.example
-$(DOXYINDEX): src/*.cpp Doxyfile $(USAGE) $(EXAMPLE)
+
+$(DOXYINDEX): Doxyfile src/*.h src/*.cpp src/mylib/*.cpp $(USAGE) $(EXAMPLE)
 	doxygen
 
 $(USAGE): $*.exe Makefile
@@ -80,7 +86,6 @@ zipdump.example: zipdump.exe Makefile
 	-zipdump.exe -s test.zip >>$@
 
 $(MANUAL): $(DOXYINDEX) Makefile
-	copy html\*.css docs
 	!perl -n << html\$(@F) >$@
 		next if /^<div class="navigation"/.../^<\/div>/;		# navi-bar ‚ğœ‹‚·‚é.
 		s/<img class="footer" src="doxygen.png".+\/>/doxygen/;	# footer ‚Ì doxygenƒƒS‚ğtext‚É’u‚«Š·‚¦‚é.
