@@ -64,6 +64,7 @@ $(TARGET): $(APPSRC)
 	touch $@
 
 $(VERUP):
+	-del src\*.bak
 	svn up
 	perl -i.bak version-up.pl src/$*.cpp src/$*.*
 
