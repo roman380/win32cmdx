@@ -4,4 +4,5 @@
 	- @ref zipdump-manual
 	- @ref clip-manual
 	- @ref renamex-manual
+	- @ref delx-manual
 */
