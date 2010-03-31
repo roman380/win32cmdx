@@ -32,7 +32,7 @@ const char* gUsage  = "usage :clip [-h?cps] [FILE1 [FILE2 ...]]\n";
 
 /** detail help-message for options and version */
 const char* gUsage2 =
-	"  version 1.5 (r22)\n"
+	"  version 1.6 (r64)\n"
 	"  -h -?      this help\n"
 	"  -c --copy  copy from STDIN or FILES to CLIPBOARD (default)\n"
 	"  -p --paste paste from CLIPBOARD to STDOUT\n"
@@ -313,7 +313,7 @@ show_help:			error_abort(gUsage2);
 //------------------------------------------------------------------------
 /**@page clip-manual clip.exe - clipboard pipe
 
-@version 1.5 (r22)
+@version 1.6 (r64)
 
 @author Hiroshi Kuno <http://code.google.com/p/win32cmdx/>
 
