@@ -33,10 +33,10 @@ const char* gUsage  = "usage :clip [-h?cps] [FILE1 [FILE2 ...]]\n";
 /** detail help-message for options and version */
 const char* gUsage2 =
 	"  version 1.5 (r22)\n"
-	"  -h -?     this help\n"
-	"  -c -copy  copy from STDIN or FILES to CLIPBOARD (default)\n"
-	"  -p -paste paste from CLIPBOARD to STDOUT\n"
-	"  -s        shrink white spaces\n"
+	"  -h -?      this help\n"
+	"  -c --copy  copy from STDIN or FILES to CLIPBOARD (default)\n"
+	"  -p --paste paste from CLIPBOARD to STDOUT\n"
+	"  -s         shrink white spaces\n"
 	;
 
 //------------------------------------------------------------------------
@@ -227,24 +227,7 @@ void CopyTextFiles(int argc, char** argv, ostream& out)
 }
 
 //------------------------------------------------------------------------
-/** メイン.
-	コマンドラインを解析し、
-	その指定に応じてクリップボードのデータの操作を行う。
-
-	使い方：<DL>
-	<DT>C&gt;dir | clip
-		<DD>dirの出力(つまり標準入力)をクリップボードにCOPYする
-
-	<DT>C&gt;clip file1.txt file2.txt
-		<DD>file1.txt, file2.txtの内容をクリップボードにCOPYする
-
-	<DT>C&gt;clip -paste
-		<DD>クリップボードの内容を表示する(標準出力に送る)
-
-	<DT>C&gt;clip -paste &gt;out.txt
-		<DD>クリップボードの内容を out.txt に書き出す
-	</DL>
- */
+/** メイン関数. */
 int main(int argc, char** argv)
 {
 	setlocale(LC_ALL, "");
@@ -252,11 +235,11 @@ int main(int argc, char** argv)
 	//--- コマンドライン上のオプションを解析する.
 	while (argc > 1 && argv[1][0]=='-') {
 		char* sw = &argv[1][1];
-		if (strcmp(sw, "help") == 0)
+		if (strcmp(sw, "-help") == 0)
 			goto show_help;
-		else if (strcmp(sw, "copy") == 0)
+		else if (strcmp(sw, "-copy") == 0)
 			gPasteMode = false;
-		else if (strcmp(sw, "paste") == 0)
+		else if (strcmp(sw, "-paste") == 0)
 			gPasteMode = true;
 		else {
 			do {
@@ -367,10 +350,10 @@ C>dir | clip
 C>clip file1.txt file2.txt
 	file1.txt, file2.txtの内容をクリップボードにCOPYする
 
-C>clip -paste
+C>clip --paste
 	クリップボードの内容を表示する(標準出力に送る)
 
-C>clip -paste >out.txt
+C>clip --paste >out.txt
 	クリップボードの内容を out.txt に書き出す
 	@endverbatim
 
@@ -381,10 +364,11 @@ C>clip -paste >out.txt
 	- http://code.google.com/p/win32cmdx/ - clip開発サイト
 
 @section download ダウンロード
-	- http://code.google.com/p/win32cmdx/downloads/list - 最新版 version 1.5 (r22) [Jan 17, 2010]
+	- http://code.google.com/p/win32cmdx/downloads/list
 
 @section changelog 改訂履歴
-	@subsection Rel100 version-1.5 [Jan 17, 2010] 公開初版
+	- version-1.6 [Mar 31, 2010] 長い名前のオプション指定を "-" から "--" に変更し、1文字オプションとの衝突を回避した.
+	- version-1.5 [Jan 17, 2010] 公開初版.
 */
 
 // clip.cpp - end.
