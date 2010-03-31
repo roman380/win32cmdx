@@ -70,7 +70,7 @@ $(VERUP):
 #.........................................................................
 # DOCUMENT
 #
-USAGE  =zipdump.usage clip.usage renamex.usage
+USAGE  =zipdump.usage clip.usage renamex.usage delx.usage
 EXAMPLE=zipdump.example
 
 $(DOXYINDEX): Doxyfile src/*.h src/*.cpp src/mylib/*.cpp $(USAGE) $(EXAMPLE)

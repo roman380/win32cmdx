@@ -1,4 +1,4 @@
-/**@name delx.cpp --- ファイルをWindowsのゴミ箱へ送る.
+/**@file delx.cpp --- ファイルをWindowsのゴミ箱へ送る.
  * @author Hiroshi Kuno <http://code.google.com/p/win32cmdx/>
  */
 #include <windows.h>
@@ -24,7 +24,7 @@ const char* gUsage  = "usage :delx [-h?] FILE1 FILE2...\n";
 
 /** detail help-message for options and version */
 const char* gUsage2 =
-	"  version 1.0 (r56)\n"
+	"  version 1.0 (r62)\n"
 	"  -h -?  this help\n"
 	"  FLIE#  sending to recycler. wildcard OK\n"
 	;
@@ -93,7 +93,7 @@ show_help:			error_abort(gUsage2);
 //------------------------------------------------------------------------
 /**@page delx-manual delx.exe - send files to recycler.
 
-@version 1.0 (r56)
+@version 1.0 (r62)
 
 @author Hiroshi Kuno <http://code.google.com/p/win32cmdx/>
 
@@ -118,10 +118,7 @@ show_help:			error_abort(gUsage2);
 	アインインストールするには、そのコピーしたファイルを削除してください。
 
 @section delx-usage 使い方
-	@@@todo
-
-@section delx-example 出力例
-	@@@todo
+	@verbinclude delx.usage
 
 @section links リンク
 	- http://code.google.com/p/win32cmdx/ - delx開発サイト
@@ -130,8 +127,8 @@ show_help:			error_abort(gUsage2);
 	- http://code.google.com/p/win32cmdx/downloads/list
 
 @section changelog 改訂履歴
-	- version-1.0 [Feb xx, 2010] 公開初版
+	- version-1.0 [Mar 31, 2010] 公開初版
 	- version-0.1 [Apr 18, 2001] original
 */
 
-// del9.cpp - end.
+// delx.cpp - end.
