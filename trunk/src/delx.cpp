@@ -11,7 +11,7 @@
 //------------------------------------------------------------------------
 // 汎用関数群 - inline関数が多いので、分割コンパイルせずincludeで取り込む.
 //........................................................................
-//#include "mylib\errfunc.cpp"
+#include "mylib\errfunc.cpp"
 //#include "mylib\strfunc.cpp"
 
 //------------------------------------------------------------------------
@@ -20,11 +20,12 @@
 //!@name messages
 //@{
 /** short help-message */
-const char* gUsage  = "usage :delx FILE1 FILE2...\n";
+const char* gUsage  = "usage :delx [-h?] FILE1 FILE2...\n";
 
 /** detail help-message for options and version */
 const char* gUsage2 =
 	"  version 1.0 (r56)\n"
+	"  -h -?  this help\n"
 	"  FLIE#  sending to recycler. wildcard OK\n"
 	;
 //@}
@@ -57,10 +58,32 @@ int recycle_bin(const char* fname)
 /** メイン */
 int main(int argc, char** argv)
 {
+	//--- コマンドライン上のオプションを解析する.
+	while (argc > 1 && argv[1][0]=='-') {
+		char* sw = &argv[1][1];
+		if (strcmp(sw, "-help") == 0)
+			goto show_help;
+		else {
+			do {
+				switch (*sw) {
+				case 'h': case '?':
+show_help:			error_abort(gUsage2);
+					break;
+				default:
+					errorf_abort("-%s: unknown option.\n", sw);
+					break;
+				}
+			} while (*++sw);
+		}
+//next_arg:
+		++argv;
+		--argc;
+	}
+
+	//--- 引数に与えられたファイルを順番にゴミ箱へ送る.
 	if (argc < 2) {
-		fputs(gUsage, stderr);
-		fputs(gUsage2, stderr);
-		return EXIT_FAILURE;
+		// 引数なし. usageを表示して終了する.
+		goto show_help;
 	}
 	for (int i = 1; i < argc; ++i)
 		recycle_bin(argv[i]);
