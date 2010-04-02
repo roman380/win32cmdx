@@ -41,7 +41,7 @@ zip:
 	svn status
 	del win32cmdx-???.zip
 	zip win32cmdx-src.zip $(ALLSRC) Makefile Doxyfile *.pl test/* -x *.aps
-	zip win32dmdx-exe.zip -j $(TARGET) $(MANUAL) html/*.css
+	zip win32cmdx-exe.zip -j $(TARGET) $(MANUAL) html/*.css
 
 install: $(TARGET)
 	!copy $** \home\bin
