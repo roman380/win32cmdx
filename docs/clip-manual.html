@@ -35,11 +35,12 @@ Copyright &copy; 2001,2003,2010 by Hiroshi Kuno <br/>
 <p>配布ファイル clip.exe を、PATHが通ったフォルダにコピーしてください。 アインインストールするには、そのコピーしたファイルを削除してください。</p>
 <h2><a class="anchor" id="usage">
 使い方</a></h2>
-<div class="fragment"><pre class="fragment">usage :clip [-h?cps] [FILE1 [FILE2 ...]]
+<div class="fragment"><pre class="fragment">usage :clip [-h?cpos] [FILE1 [FILE2 ...]]
   version 1.6 (r64)
   -h -?      this help
   -c --copy  copy from STDIN or FILES to CLIPBOARD (default)
   -p --paste paste from CLIPBOARD to STDOUT
+  -o         ommit filename prompt
   -s         shrink white spaces
 </pre></div><h2><a class="anchor" id="clip-example">
 使用例</a></h2>
@@ -73,11 +74,12 @@ C&gt;clip --paste &gt;out.txt
 <h2><a class="anchor" id="changelog">
 改訂履歴</a></h2>
 <ul>
+<li>version-1.7 [Apr 05, 2010] ファイル名プロンプト抑制オプション -o を追加した.</li>
 <li>version-1.6 [Mar 31, 2010] 長い名前のオプション指定を "-" から "--" に変更し、1文字オプションとの衝突を回避した.</li>
 <li>version-1.5 [Jan 17, 2010] 公開初版. </li>
 </ul>
 </div>
-<hr class="footer"/><address style="text-align: right;"><small>Generated on Fri Apr 2 14:48:50 2010 for win32cmdx by&nbsp;
+<hr class="footer"/><address style="text-align: right;"><small>Generated on Mon Apr 5 10:00:04 2010 for win32cmdx by&nbsp;
 <a href="http://www.doxygen.org/index.html">
 doxygen</a> 1.6.3 </small></address>
 </body>

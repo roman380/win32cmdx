@@ -19,23 +19,27 @@ using namespace std;
 //........................................................................
 // global variables
 
-/** -p/paste: paste mode */
+/** -p/--paste: paste mode */
 bool gPasteMode = false;
 
 /** -s: shrink white spaces */
 bool gShrinkSpaces = false;
 
+/** -o: omit filename prompt */
+bool gOmitFileName = false;
+
 //........................................................................
 // messages
 /** short help-message */
-const char* gUsage  = "usage :clip [-h?cps] [FILE1 [FILE2 ...]]\n";
+const char* gUsage  = "usage :clip [-h?cpos] [FILE1 [FILE2 ...]]\n";
 
 /** detail help-message for options and version */
 const char* gUsage2 =
-	"  version 1.6 (r64)\n"
+	"  version 1.7 (r66)\n"
 	"  -h -?      this help\n"
 	"  -c --copy  copy from STDIN or FILES to CLIPBOARD (default)\n"
 	"  -p --paste paste from CLIPBOARD to STDOUT\n"
+	"  -o         omit filename prompt\n"
 	"  -s         shrink white spaces\n"
 	;
 
@@ -207,13 +211,17 @@ void CopyTextFile(const char* fname, ostream& out)
 	if (!f)
 		throw runtime_error("can't open: " + string(fname));
 
-	out << "--- begin " << fname << " ---" << endl;
+	if (!gOmitFileName) {
+		out << "--- begin " << fname << " ---" << endl;
+	}
 
 	char c = CopyText(f, out);
 	if (c != '\n')
 		out << endl;
 
-	out << "--- end " << fname << " ---" << endl;
+	if (!gOmitFileName) {
+		out << "--- end " << fname << " ---" << endl;
+	}
 }
 
 /** 複数ファイル転送 */
@@ -249,6 +257,9 @@ show_help:			error_abort(gUsage2);
 					break;
 				case 'c':
 					gPasteMode = false;
+					break;
+				case 'o':
+					gOmitFileName = true;
 					break;
 				case 'p':
 					gPasteMode = true;
@@ -313,7 +324,7 @@ show_help:			error_abort(gUsage2);
 //------------------------------------------------------------------------
 /**@page clip-manual clip.exe - clipboard pipe
 
-@version 1.6 (r64)
+@version 1.7 (r66)
 
 @author Hiroshi Kuno <http://code.google.com/p/win32cmdx/>
 
@@ -367,6 +378,7 @@ C>clip --paste >out.txt
 	- http://code.google.com/p/win32cmdx/downloads/list
 
 @section changelog 改訂履歴
+	- version-1.7 [Apr 05, 2010] ファイル名プロンプト抑制オプション -o を追加した.
 	- version-1.6 [Mar 31, 2010] 長い名前のオプション指定を "-" から "--" に変更し、1文字オプションとの衝突を回避した.
 	- version-1.5 [Jan 17, 2010] 公開初版.
 */
