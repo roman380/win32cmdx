@@ -193,7 +193,7 @@ void Compare(const char* dir1, const char* dir2, const char* wild)
 			char file2[_MAX_PATH];
 			_makepath(file1, NULL, dir1, j->second.Left->name, NULL);
 			_makepath(file2, NULL, dir2, j->second.Right->name, NULL);
-			spawnlp(_P_WAIT, "diff", "diff", "-Bwqs", file1, file2, NULL);
+			_spawnlp(_P_WAIT, "diff", "diff", "-Bwqs", file1, file2, NULL);
 		}
 	}
 }

@@ -41,7 +41,7 @@ int recycle_bin(const char* fname)
 
 	// SHFileOperationは fullpathでないと受け付けない
 	// ファイル名末尾は "\0\0"でないといけない
-	GetFullPathName(fname, sizeof(fullname)-1, fullname, &last);
+	GetFullPathName(fname, _countof(fullname)-1, fullname, &last);
 	fullname[strlen(fullname)+1] = '\0';
 
 	SHFILEOPSTRUCT op;
