@@ -1,11 +1,11 @@
-# Makefile - for zipdump, clip, renamex, delx, dirdiff
+# Makefile - for zipdump, clipx, renamex, delx, dirdiff
 #
 # Project Home: http://code.google.com/p/win32cmdx/
 # Code license: New BSD License
 #-------------------------------------------------------------------------
 # MACROS
 #
-TARGET  =zipdump.exe clip.exe renamex.exe delx.exe dirdiff.exe
+TARGET  =zipdump.exe clipx.exe renamex.exe delx.exe dirdiff.exe
 MANUAL  =$(TARGET:.exe=-manual.html)
 SOLUTION=$(TARGET:.exe=.sln)
 VERUP   =$(TARGET:.exe=.verup)
@@ -71,7 +71,7 @@ $(VERUP):
 #.........................................................................
 # DOCUMENT
 #
-USAGE  =zipdump.usage clip.usage renamex.usage delx.usage
+USAGE  =zipdump.usage clipx.usage renamex.usage delx.usage
 EXAMPLE=zipdump.example
 
 $(DOXYINDEX): Doxyfile src/*.h src/*.cpp src/mylib/*.cpp $(USAGE) $(EXAMPLE)

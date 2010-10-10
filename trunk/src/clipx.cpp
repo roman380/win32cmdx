@@ -1,4 +1,4 @@
-/**@file clip.cpp --- クリップボード転送フィルタ.
+/**@file clipx.cpp --- クリップボード転送フィルタ.
  * @author Hiroshi Kuno <http://code.google.com/p/win32cmdx/>
  */
 #include <windows.h>
@@ -31,11 +31,11 @@ bool gOmitFileName = false;
 //........................................................................
 // messages
 /** short help-message */
-const char* gUsage  = "usage :clip [-h?cpos] [FILE1 [FILE2 ...]]\n";
+const char* gUsage  = "usage :clipx [-h?cpos] [FILE1 [FILE2 ...]]\n";
 
 /** detail help-message for options and version */
 const char* gUsage2 =
-	"  version 1.7 (r66)\n"
+	"  version 1.8 (r70)\n"
 	"  -h -?      this help\n"
 	"  -c --copy  copy from STDIN or FILES to CLIPBOARD (default)\n"
 	"  -p --paste paste from CLIPBOARD to STDOUT\n"
@@ -322,9 +322,9 @@ show_help:			error_abort(gUsage2);
 	return EXIT_SUCCESS;
 }
 //------------------------------------------------------------------------
-/**@page clip-manual clip.exe - clipboard pipe
+/**@page clipx-manual clipx.exe - clipboard pipe
 
-@version 1.7 (r66)
+@version 1.8 (r70)
 
 @author Hiroshi Kuno <http://code.google.com/p/win32cmdx/>
 
@@ -335,9 +335,9 @@ show_help:			error_abort(gUsage2);
 
 <hr>
 @section intro はじめに
-	clipは、クリップボードの内容をコマンドパイプラインに繋げるコマンドです。
+	clipxは、クリップボードの内容をコマンドパイプラインに繋げるコマンドです。
 
-@section clip-func 機能
+@section clipx-func 機能
 	- 指定ファイルまたは標準入力を読み出し、クリップボードへ格納します。
 	- クリップボードの内容を読み出し、標準出力へ出力します。
 	- オプション動作として、空白文字を圧縮できます。
@@ -347,24 +347,24 @@ show_help:			error_abort(gUsage2);
 	WindowsXP にて動作確認済み。
 
 @section install インストール方法
-	配布ファイル clip.exe を、PATHが通ったフォルダにコピーしてください。
+	配布ファイル clipx.exe を、PATHが通ったフォルダにコピーしてください。
 	アインインストールするには、そのコピーしたファイルを削除してください。
 
 @section usage 使い方
-	@verbinclude clip.usage
+	@verbinclude clipx.usage
 
-@section clip-example 使用例
+@section clipx-example 使用例
 	@verbatim
-C>dir | clip
+C>dir | clipx
 	dirの出力(つまり標準入力)をクリップボードにCOPYする
 
-C>clip file1.txt file2.txt
+C>clipx file1.txt file2.txt
 	file1.txt, file2.txtの内容をクリップボードにCOPYする
 
-C>clip --paste
+C>clipx --paste
 	クリップボードの内容を表示する(標準出力に送る)
 
-C>clip --paste >out.txt
+C>clipx --paste >out.txt
 	クリップボードの内容を out.txt に書き出す
 	@endverbatim
 
@@ -372,15 +372,16 @@ C>clip --paste >out.txt
 	- 画像ファイルを扱えるようにする.
 
 @section links リンク
-	- http://code.google.com/p/win32cmdx/ - clip開発サイト
+	- http://code.google.com/p/win32cmdx/ - clipx開発サイト
 
 @section download ダウンロード
 	- http://code.google.com/p/win32cmdx/downloads/list
 
 @section changelog 改訂履歴
+	- version-1.8 [Oct 10, 2010] Vista/Windows7の標準コマンドclipと名前が衝突するので、clip から clipx に変更した.
 	- version-1.7 [Apr 05, 2010] ファイル名プロンプト抑制オプション -o を追加した.
 	- version-1.6 [Mar 31, 2010] 長い名前のオプション指定を "-" から "--" に変更し、1文字オプションとの衝突を回避した.
 	- version-1.5 [Jan 17, 2010] 公開初版.
 */
 
-// clip.cpp - end.
+// clipx.cpp - end.

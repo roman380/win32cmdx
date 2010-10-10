@@ -53,8 +53,8 @@ END
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 1,7,0,66
- PRODUCTVERSION 1,7,0,66
+ FILEVERSION 1,8,0,70
+ PRODUCTVERSION 1,8,0,70
  FILEFLAGSMASK 0x17L
 #ifdef _DEBUG
  FILEFLAGS 0x1L
@@ -72,12 +72,12 @@ BEGIN
             VALUE "Comments", "ProjectHome: http://code.google.com/p/win32cmdx/"
             VALUE "CompanyName", "New BSD License"
             VALUE "FileDescription", "clipboard filter"
-            VALUE "FileVersion", "1, 7, 0, 66"
+            VALUE "FileVersion", "1, 8, 0, 70"
             VALUE "InternalName", "clip"
             VALUE "LegalCopyright", "Copyright (C) 2001, 2003, 2004, 2010"
             VALUE "OriginalFilename", "clip.exe"
             VALUE "ProductName", "clip"
-            VALUE "ProductVersion", "1, 7, 0, 66"
+            VALUE "ProductVersion", "1, 8, 0, 70"
         END
     END
     BLOCK "VarFileInfo"

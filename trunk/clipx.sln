@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 10.00
 # Visual C++ Express 2008
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "clip", "clip.vcproj", "{D704B04B-EF1F-41F5-B0F6-9E4FF1C9F8BF}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "clipx", "clipx.vcproj", "{D704B04B-EF1F-41F5-B0F6-9E4FF1C9F8BF}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
