@@ -73,10 +73,10 @@ BEGIN
             VALUE "CompanyName", "New BSD License"
             VALUE "FileDescription", "clipboard filter"
             VALUE "FileVersion", "1, 8, 0, 70"
-            VALUE "InternalName", "clip"
+            VALUE "InternalName", "clipx"
             VALUE "LegalCopyright", "Copyright (C) 2001, 2003, 2004, 2010"
-            VALUE "OriginalFilename", "clip.exe"
-            VALUE "ProductName", "clip"
+            VALUE "OriginalFilename", "clipx.exe"
+            VALUE "ProductName", "clipx"
             VALUE "ProductVersion", "1, 8, 0, 70"
         END
     END
